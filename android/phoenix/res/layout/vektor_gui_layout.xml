@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal" >
+
+    <LinearLayout
+        android:id="@+id/vektor_gui_left_panel"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight=".35"
+        android:background="#FFFFFFFF"
+        android:orientation="vertical" >
+
+        <com.retroarch.browser.vektorgui.ui.VektorGuiTextView
+            android:id="@+id/vektor_gui_gametitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Game Title (Game year?)"
+            android:textColor="#FF000000"
+            android:gravity="center_horizontal"
+            android:layout_marginTop="25dp"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+
+        <ImageView
+            android:id="@+id/vektor_gui_gamecover"
+            android:layout_width="128dp"
+            android:layout_height="128dp"
+            android:layout_marginTop="15dp"
+            android:src="@drawable/vektor_nocover" 
+            android:layout_gravity="center_horizontal"/>
+
+        <com.retroarch.browser.vektorgui.ui.VektorGuiTextView
+            android:id="@+id/vektor_gui_gamedesc_title"
+            android:paddingLeft="25dp"
+            android:layout_marginTop="20dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#FF000000"
+            android:text="Game description:"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+
+        <com.retroarch.browser.vektorgui.ui.VektorGuiTextView
+            android:id="@+id/vektor_gui_gamedesc"
+            android:layout_marginTop="5dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+       		android:layout_gravity="center_horizontal"
+       		android:scrollbars="vertical"
+       		android:textColor="#FF000000"
+       		android:maxLines="10"
+       		android:paddingLeft="25dp"
+       		android:paddingRight="25dp"
+            android:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis ultricies posuere nisi, eu auctor neque dignissim eu. Vestibulum non lobortis augue, a venenatis diam. Sed lectus odio, ornare id placerat non, iaculis vel massa. Curabitur sodales faucibus quam. In mattis, purus nec placerat luctus, nibh neque accumsan lectus, in bibendum justo justo vel lacus. Aenean at quam id nulla iaculis venenatis in id lectus. Donec quis turpis ornare, sollicitudin nunc sit amet, euismod enim. Suspendisse tempor, ipsum non tristique pretium, ipsum diam hendrerit ante, vel pretium orci sapien at orci. Integer sed eros at ante commodo blandit eget a turpis. Etiam elementum nulla magna, non sollicitudin sapien dictum at. Phasellus rutrum blandit dolor, quis adipiscing erat blandit vel. Morbi pulvinar in nunc sed sollicitudin. Aliquam convallis justo porta libero euismod, a varius lacus sagittis. Pellentesque ut mattis purus, ut molestie orci. Maecenas aliquet, lacus id aliquam elementum, quam augue egestas libero, dictum semper neque odio ultricies orci. Donec a vehicula libero." />
+        
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/vektor_gui_right_panel"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:background="#FFFF0000"
+        android:layout_weight=".65"
+        android:orientation="vertical" >
+
+        <ListView
+            android:id="@+id/vektor_gui_game_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" >
+        </ListView>
+
+    </LinearLayout>
+
+</LinearLayout>
