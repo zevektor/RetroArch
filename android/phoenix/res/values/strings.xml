@@ -251,5 +251,7 @@
     <string name="no">No</string>
     <string name="yes">Yes</string>
 
+    <!-- Vektor GUI -->
+    <string name="load_vektor_gui">Load Vektor GUI (Experimental)</string>
     
 </resources>

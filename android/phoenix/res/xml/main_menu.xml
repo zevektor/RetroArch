@@ -7,6 +7,10 @@
         android:key="resumeContentPref"
         android:title="@string/resume_content"/>
 
+    <!-- Vektor GUI -->
+    <Preference 
+        android:key="loadVektorGUI"
+        android:title="@string/load_vektor_gui"/>
     <!-- Load Core -->
     <Preference
         android:key="loadCorePref"
