@@ -253,5 +253,10 @@
 
     <!-- Vektor GUI -->
     <string name="load_vektor_gui">Load Vektor GUI (Experimental)</string>
-    
+    <string name="vektor_gui_play_game">Play This Game</string>
+    <string name="vektor_gui_platform_name">Platform Name:</string>
+    <string name="vektor_gui_platform_core">Platform Core:</string>
+    <string name="cancel">Cancel</string>
+    <string name="vektor_gui_game_description">Game Description:</string>
+    <string name="vektor_gui_game_no_description">Description not available for this game.</string>
 </resources>
