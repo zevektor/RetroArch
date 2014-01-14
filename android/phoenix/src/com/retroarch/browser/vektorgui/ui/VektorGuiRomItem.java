@@ -34,6 +34,10 @@ public class VektorGuiRomItem {
 	public String getGameYear(){	
 		return strGameYear;
 	}
+	
+	public String getRomPath(){
+		return fROMPath.getAbsolutePath();
+	}
 	/*
 	public void setGameBackground(Drawable gameBackground) {
 		bmGameBackground = gameBackground;

@@ -23,7 +23,7 @@ public class VektorGuiTextView extends TextView {
     }
 
     public void init() {
-        Typeface tf = Typeface.createFromAsset(getContext().getAssets(), "fonts/lunchds.ttf");
+        Typeface tf = Typeface.createFromAsset(getContext().getAssets(), "fonts/emulogic.ttf");
         setTypeface(tf ,1);
 
     }

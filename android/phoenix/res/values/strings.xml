@@ -47,7 +47,7 @@
 
     <!-- History Selection Class -->
     <string name="loading_gamepath">Loading [%1$s]…</string>
-    
+
     <!-- Key Bind Preference Class -->
     <string name="current_binding">Current: %1$s</string>
     <string name="press_key_to_use">Press key to use</string>
@@ -78,17 +78,18 @@
     <!-- GPL cores AlertDialog -->
     <string name="keep_cores">Keep cores</string>
     <string name="remove_cores">Remove non-GPL cores</string>
-    
+
     <!-- Refresh Rate Set OS Class -->
     <string name="using_os_reported_refresh_rate">Using OS-reported refresh rate of: %1$s Hz.</string>
-    
+
     <!-- Settings Based Strings -->
+
 
     <!-- Back Options -->
     <string name="quit">Quit</string>
     <string name="gui_toggle">GUI toggle</string>
     <string name="menu_toggle">Menu toggle</string>
-    
+
     <!-- Audio Settings -->
     <string name="audio_options">Audio</string>
     <string name="enable_audio">Enable audio</string>
@@ -242,7 +243,7 @@
     <string name="overlay_guide_desc">Explains howto make your own overlays.</string>
     <string name="libretro_guide">Libretro Guide (PDF)</string>
     <string name="libretro_guide_desc">Guide to using libretro for developers.</string>
-    
+
     <!-- Miscellaneous -->
     <string name="ok">OK</string>
     <string name="close">Close</string>
@@ -259,4 +260,6 @@
     <string name="cancel">Cancel</string>
     <string name="vektor_gui_game_description">Game Description:</string>
     <string name="vektor_gui_game_no_description">Description not available for this game.</string>
+    <string name="vektor_gui_list_gamesfound">Games found: [%d]</string>
+
 </resources>
