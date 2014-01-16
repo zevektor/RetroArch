@@ -306,11 +306,13 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 			romList.setSelection(0);
 			// Log.d("VektorGuiActivity::initRoms()","Setting cursor at first element of list.");
 			updateUI(romListAdapter.getItem(0), 0);
-		} else{
+		} else {
 			gameyear.setText("19XX");
 			gametitle.setText("Game Title");
-			gamedesc.setText(getResources().getString(R.string.vektor_gui_game_no_description));
-			gamecover.setImageDrawable(getResources().getDrawable(R.drawable.vektor_nocover));
+			gamedesc.setText(getResources().getString(
+					R.string.vektor_gui_game_no_description));
+			gamecover.setImageDrawable(getResources().getDrawable(
+					R.drawable.vektor_nocover));
 		}
 		romListAdapter.selectRow(0);
 		numGames.setText(getResources().getString(
@@ -438,7 +440,8 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 
 	private void loadAssociatedMetadata(VektorGuiRomItem item) {
 		File resStor = new File(romFolder, "Resources");
-		Log.d("VektorGuiActivity::loadAssociatedMetaData()",item.getGameName()+" - "+item.getRomPath());
+		Log.d("VektorGuiActivity::loadAssociatedMetaData()", item.getGameName()
+				+ " - " + item.getRomPath());
 		if (platformPath.equalsIgnoreCase("PSX")) {
 			String id = item.getGameCRC();
 			// Log.i("GameID",id);
@@ -458,9 +461,9 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 								.getGameName() + ".prop")));
 						item.fromProperties(props);
 					} catch (FileNotFoundException e) {
-						//e.printStackTrace();
+						// e.printStackTrace();
 					} catch (IOException e) {
-						//e.printStackTrace();
+						// e.printStackTrace();
 					}
 					if (fExtRes.exists()) {
 						item.setGameCover(new BitmapDrawable(this
@@ -518,9 +521,9 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 								.getGameName() + ".prop")));
 						item.fromProperties(props);
 					} catch (FileNotFoundException e) {
-						//e.printStackTrace();
+						// e.printStackTrace();
 					} catch (IOException e) {
-						//e.printStackTrace();
+						// e.printStackTrace();
 					}
 					File fExtRes = new File(resStor, item.getGameName()
 							+ "-CV.jpg");
@@ -690,7 +693,8 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 	public void onClick(View v) {
 
 		if (v.getId() == R.id.vektor_gui_playgame_btn && null != romListAdapter) {
-			if (romListAdapter.getSelectedItem() > -1) {
+			if (romListAdapter.getCount()>0) {
+				
 				romExecute(romListAdapter.getItem(
 						romListAdapter.getSelectedItem()).getRomPath());
 			}
@@ -721,7 +725,9 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 				}
 				break;
 			case KeyEvent.KEYCODE_ENTER:
-				if(romListAdapter.getSelectedItem()>-1) this.romExecute(romListAdapter.getItem(romListAdapter.getSelectedItem()).getRomPath());
+				if (romListAdapter.getSelectedItem() > -1)
+					this.romExecute(romListAdapter.getItem(
+							romListAdapter.getSelectedItem()).getRomPath());
 				break;
 			}
 		}
