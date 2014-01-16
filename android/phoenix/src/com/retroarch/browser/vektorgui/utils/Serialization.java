@@ -4,7 +4,7 @@ public class Serialization {
 	public static class gameClass {
 		private String gameTitle = null;
 		private String coverURL = null;
-		private String gameDescription = null;
+		private String gameDescription = "";
 		private String gameYear = null;
 
 		public gameClass(String title, String url, String description,
@@ -47,7 +47,7 @@ public class Serialization {
 		public void clear() {
 			coverURL = null;
 			gameTitle = null;
-			gameDescription = null;
+			gameDescription = "";
 			gameYear = null;
 		}
 	}

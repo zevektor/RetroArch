@@ -1,5 +1,7 @@
 package com.retroarch.browser.vektorgui.ui;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import com.retroarch.R;
@@ -7,6 +9,7 @@ import com.retroarch.R;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,6 +28,11 @@ public class VektorGuiRomAdapter extends BaseAdapter {
 	public VektorGuiRomAdapter(List<VektorGuiRomItem> roms, Context ctx) {
 		this.roms = roms;
 		this.mContext = ctx;
+		Collections.sort(roms, new Comparator<VektorGuiRomItem>() {
+		    public int compare(VektorGuiRomItem vgri1, VektorGuiRomItem vgri2) {
+		        return vgri1.getGameName().toLowerCase().compareTo(vgri2.getGameName().toLowerCase());
+		    }
+		});
 	}
 
 	@Override
@@ -44,6 +52,7 @@ public class VektorGuiRomAdapter extends BaseAdapter {
 
 	@Override
 	public View getView(int position, View v, ViewGroup vg) {
+		Log.d("VektorGuiRomAdapter::getView()","Generating view for pos:"+position+", selectedItem seems to be:"+selectedItem);
 		VektorGuiRomItem entry = roms.get(position);
 		if (null == v) {
 			LayoutInflater inflater = (LayoutInflater) mContext
@@ -62,7 +71,7 @@ public class VektorGuiRomAdapter extends BaseAdapter {
 		} else {
 			gameTitle.setTextColor(Color.WHITE);
 			gameTitle.setSelected(false);
-			gameBg.setBackgroundColor(Color.TRANSPARENT);
+			gameBg.setBackgroundColor(Color.BLACK);
 		}
 		gameTitle.setText(entry.getGameName());
 		return v;

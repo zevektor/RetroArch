@@ -21,8 +21,8 @@
             android:gravity="center_horizontal"
             android:maxLines="2"
             android:text="Game Title"
-            android:textSize="14sp"
-            android:textColor="#FFFFFFFF" />
+            android:textColor="#FFFFFFFF"
+            android:textSize="14sp" />
 
         <com.retroarch.browser.vektorgui.ui.VektorGuiTextView
             android:id="@+id/vektor_gui_gameyear"
@@ -31,8 +31,8 @@
             android:layout_marginTop="10dp"
             android:gravity="center_horizontal"
             android:text="19XX"
-            android:textSize="14sp"
-            android:textColor="#FFFFFFFF" />
+            android:textColor="#FFFFFFFF"
+            android:textSize="14sp" />
 
         <ImageView
             android:id="@+id/vektor_gui_gamecover"
@@ -49,8 +49,8 @@
             android:layout_marginTop="20dp"
             android:paddingLeft="25dp"
             android:text="@string/vektor_gui_game_description"
-            android:textSize="14sp"
-            android:textColor="#FFFFFFFF" />
+            android:textColor="#FFFFFFFF"
+            android:textSize="14sp" />
 
         <com.retroarch.browser.vektorgui.ui.VektorGuiTextView
             android:id="@+id/vektor_gui_gamedesc"
@@ -58,6 +58,8 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="5dp"
+            android:focusable="false"
+            android:focusableInTouchMode="true"
             android:maxLines="8"
             android:paddingLeft="25dp"
             android:paddingRight="25dp"
@@ -69,9 +71,10 @@
             android:id="@+id/vektor_gui_playgame_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="10dp"
+            android:focusable="false"
+            android:focusableInTouchMode="true"
             android:text="@string/vektor_gui_play_game"
             android:textSize="12sp" />
     </LinearLayout>
@@ -89,8 +92,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:text="@string/vektor_gui_platform_name"
-            android:textSize="14sp"
-            android:textColor="#FFFFFFFF" />
+            android:textColor="#FFFFFFFF"
+            android:textSize="14sp" />
 
         <com.retroarch.browser.vektorgui.ui.VektorGuiTextView
             android:id="@+id/vektor_gui_list_platformcore_title"
@@ -98,8 +101,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:text="@string/vektor_gui_platform_core"
-            android:textSize="14sp"
-            android:textColor="#FFFFFFFF" />
+            android:textColor="#FFFFFFFF"
+            android:textSize="14sp" />
 
         <com.retroarch.browser.vektorgui.ui.VektorGuiTextView
             android:id="@+id/vektor_gui_list_numgamesfound"
@@ -107,8 +110,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
             android:text="@string/vektor_gui_list_gamesfound"
-            android:textSize="14sp"
-            android:textColor="#FFFFFFFF" />
+            android:textColor="#FFFFFFFF"
+            android:textSize="14sp" />
 
         <ListView
             android:id="@+id/vektor_gui_game_list"

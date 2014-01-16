@@ -50,11 +50,14 @@ import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.View.OnFocusChangeListener;
+import android.view.View.OnKeyListener;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.AdapterView;
@@ -65,7 +68,7 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 public class VektorGuiActivity extends Activity implements OnItemClickListener,
-		OnClickListener {
+		OnClickListener, OnKeyListener {
 	private static VektorGuiActivity theActivity;
 	private VektorGuiTextView gametitle;
 	private ImageView gamecover;
@@ -74,6 +77,7 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 	private VektorGuiTextView gameyear;
 	private VektorGuiTextView numGames;
 	private VektorGuiButton playgame;
+	private VektorGuiRomAdapter romListAdapter;
 	private ListView romList;
 	private List<String> supported_extensions;
 	private MediaPlayer mp;
@@ -142,6 +146,7 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 		this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
 				WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		mp = MediaPlayer.create(getApplicationContext(), R.raw.button11);
+		romListAdapter = new VektorGuiRomAdapter(roms, getApplicationContext());
 		mManager = (DownloadManager) getSystemService(Activity.DOWNLOAD_SERVICE);
 		setContentView(R.layout.vektor_gui_layout);
 		defineUI();
@@ -293,15 +298,16 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 
 		// Once it's done, we populate the list.
 		romList = (ListView) findViewById(R.id.vektor_gui_game_list);
-		romList.setAdapter(new VektorGuiRomAdapter(roms,
-				getApplicationContext()));
-		((VektorGuiRomAdapter) romList.getAdapter()).notifyDataSetChanged();
+		romList.setAdapter(romListAdapter);
+		romListAdapter.notifyDataSetChanged();
 		romList.setOnItemClickListener(this);
+		romList.setOnKeyListener(this);
 		if (roms.size() > 0) {
 			romList.setSelection(0);
-			updateUI(((VektorGuiRomAdapter) romList.getAdapter()).getItem(0), 0);
+			// Log.d("VektorGuiActivity::initRoms()","Setting cursor at first element of list.");
+			updateUI(romListAdapter.getItem(0), 0);
 		}
-		((VektorGuiRomAdapter) romList.getAdapter()).selectRow(0);
+		romListAdapter.selectRow(0);
 		numGames.setText(getResources().getString(
 				R.string.vektor_gui_list_gamesfound).replace("[%d]",
 				Integer.toString(roms.size())));
@@ -427,6 +433,7 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 
 	private void loadAssociatedMetadata(VektorGuiRomItem item) {
 		File resStor = new File(romFolder, "Resources");
+		Log.d("VektorGuiActivity::loadAssociatedMetaData()",item.getGameName()+" - "+item.getRomPath());
 		if (platformPath.equalsIgnoreCase("PSX")) {
 			String id = item.getGameCRC();
 			// Log.i("GameID",id);
@@ -626,12 +633,7 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 
 	@Override
 	public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
-		if (arg2 != ((VektorGuiRomAdapter) romList.getAdapter())
-				.getSelectedItem()) {
-			mp.start();
-		}
-		updateUI(((VektorGuiRomAdapter) romList.getAdapter()).getItem(arg2),
-				arg2);
+		updateUI(romListAdapter.getItem(arg2), arg2);
 	}
 
 	private void updateUI(VektorGuiRomItem item, int position) {
@@ -639,7 +641,18 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 		gamedesc.setText(item.getGameDescription());
 		gameyear.setText(item.getGameYear());
 		gamecover.setImageDrawable(item.getGameCover());
-		((VektorGuiRomAdapter) romList.getAdapter()).selectRow(position);
+		if (position != romListAdapter.getSelectedItem()) {
+			mp.start();
+		}
+		romListAdapter.selectRow(position);
+		romList.setSelection(position);
+		if (null != romList.getSelectedView())
+			romList.getSelectedView().requestFocus();
+		Log.i("VektorGuiActivity::updateUI()",
+				"Position " + position + " selected:" + item.getGameName()
+						+ ". Position " + romList.getSelectedItemPosition()
+						+ " according to android.");
+		romListAdapter.notifyDataSetChanged();
 	}
 
 	private void romExecute(String absolutePath) {
@@ -674,12 +687,59 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 
 	@Override
 	public void onClick(View v) {
-		
-		if (v.getId()==R.id.vektor_gui_playgame_btn && null != romList.getAdapter()) {
-			VektorGuiRomAdapter vgra = (VektorGuiRomAdapter) romList.getAdapter();
-			if(vgra.getSelectedItem()>-1){
-				romExecute(vgra.getItem(vgra.getSelectedItem()).getRomPath());
+
+		if (v.getId() == R.id.vektor_gui_playgame_btn && null != romListAdapter) {
+			if (romListAdapter.getSelectedItem() > -1) {
+				romExecute(romListAdapter.getItem(
+						romListAdapter.getSelectedItem()).getRomPath());
 			}
 		}
+	}
+
+	@Override
+	public boolean onKey(View v, int keyCode, KeyEvent event) {
+		if (event.getAction() == KeyEvent.ACTION_DOWN && null != romList
+				&& null != romList.getSelectedView()
+				&& romListAdapter.getCount() > 1) {
+			switch (keyCode) {
+			case KeyEvent.KEYCODE_DPAD_DOWN:
+				if (romListAdapter.getSelectedItem() < romListAdapter
+						.getCount() - 1) {
+					updateUI(romListAdapter.getItem(romListAdapter
+							.getSelectedItem() + 1),
+							romListAdapter.getSelectedItem() + 1);
+					// romList.getSelectedView().requestFocus();
+				}
+				break;
+			case KeyEvent.KEYCODE_DPAD_UP:
+				if (romListAdapter.getSelectedItem() > 0) {
+					updateUI(romListAdapter.getItem(romListAdapter
+							.getSelectedItem() - 1),
+							romListAdapter.getSelectedItem() - 1);
+					// romList.getSelectedView().requestFocus();
+				}
+				break;
+			case KeyEvent.KEYCODE_ENTER:
+				if(romListAdapter.getSelectedItem()>-1) this.romExecute(romListAdapter.getItem(romListAdapter.getSelectedItem()).getRomPath());
+				break;
+			}
+		}
+		return false;
+	}
+
+	@Override
+	public boolean onKeyUp(int keyCode, KeyEvent event) {
+		if (null != romList.getSelectedView())
+			romList.getSelectedView().requestFocus();
+		return true;
+
+	}
+
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		if (null != romList.getSelectedView())
+			romList.getSelectedView().requestFocus();
+		return true;
+
 	}
 }

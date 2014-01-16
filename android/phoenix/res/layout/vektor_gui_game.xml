@@ -19,6 +19,6 @@
         android:freezesText="true"
         android:text="Game Name"
         android:textSize="14sp"
-        android:textColor="@color/rom_color" />
+        android:textColor="@color/android:white" />
 
 </LinearLayout>
