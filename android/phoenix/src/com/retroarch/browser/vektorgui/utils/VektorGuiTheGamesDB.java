@@ -82,7 +82,7 @@ public class VektorGuiTheGamesDB {
 			}
 		};
 
-		// return XML
+		// return XML\\
 		return;
 
 	}

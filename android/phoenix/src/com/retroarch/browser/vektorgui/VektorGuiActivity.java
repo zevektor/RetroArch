@@ -306,6 +306,11 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 			romList.setSelection(0);
 			// Log.d("VektorGuiActivity::initRoms()","Setting cursor at first element of list.");
 			updateUI(romListAdapter.getItem(0), 0);
+		} else{
+			gameyear.setText("19XX");
+			gametitle.setText("Game Title");
+			gamedesc.setText(getResources().getString(R.string.vektor_gui_game_no_description));
+			gamecover.setImageDrawable(getResources().getDrawable(R.drawable.vektor_nocover));
 		}
 		romListAdapter.selectRow(0);
 		numGames.setText(getResources().getString(
@@ -648,10 +653,6 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 		romList.setSelection(position);
 		if (null != romList.getSelectedView())
 			romList.getSelectedView().requestFocus();
-		Log.i("VektorGuiActivity::updateUI()",
-				"Position " + position + " selected:" + item.getGameName()
-						+ ". Position " + romList.getSelectedItemPosition()
-						+ " according to android.");
 		romListAdapter.notifyDataSetChanged();
 	}
 
