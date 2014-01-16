@@ -453,9 +453,9 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 								.getGameName() + ".prop")));
 						item.fromProperties(props);
 					} catch (FileNotFoundException e) {
-						e.printStackTrace();
+						//e.printStackTrace();
 					} catch (IOException e) {
-						e.printStackTrace();
+						//e.printStackTrace();
 					}
 					if (fExtRes.exists()) {
 						item.setGameCover(new BitmapDrawable(this
@@ -513,9 +513,9 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 								.getGameName() + ".prop")));
 						item.fromProperties(props);
 					} catch (FileNotFoundException e) {
-						e.printStackTrace();
+						//e.printStackTrace();
 					} catch (IOException e) {
-						e.printStackTrace();
+						//e.printStackTrace();
 					}
 					File fExtRes = new File(resStor, item.getGameName()
 							+ "-CV.jpg");
