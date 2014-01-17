@@ -1,8 +1,14 @@
 package com.retroarch.browser.vektorgui;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import com.retroarch.R;
+import com.retroarch.browser.ModuleWrapper;
+import com.retroarch.browser.preferences.util.UserPreferences;
+
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 
@@ -25,6 +31,54 @@ public class VektorGuiPlatformHelper {
 		else if("Sega Game Gear".equals(name)) return ctx.getResources().getDrawable(R.drawable.platform_gg);
 		else if("TurboGrafx-16".equals(name)) return ctx.getResources().getDrawable(R.drawable.platform_pce);
 		else if("Nintendo DS".equals(name)) return ctx.getResources().getDrawable(R.drawable.platform_nds);
+		return null;
+	}
+	public static List<ModuleWrapper> getCoreList(Context ctx) {
+		final String cpuInfo = UserPreferences.readCPUInfo();
+		final boolean cpuIsNeon = cpuInfo.contains("neon");
+		// Populate the list
+		final List<ModuleWrapper> cores = new ArrayList<ModuleWrapper>();
+		final File[] libs = new File(ctx.getApplicationInfo().dataDir,
+				"cores").listFiles();
+		for (final File lib : libs) {
+			String libName = lib.getName();
+
+			// Never append a NEON lib if we don't have NEON.
+			if (libName.contains("neon") && !cpuIsNeon)
+				continue;
+
+			// If we have a NEON version with NEON capable CPU,
+			// never append a non-NEON version.
+			if (cpuIsNeon && !libName.contains("neon")) {
+				boolean hasNeonVersion = false;
+				for (final File lib_ : libs) {
+					String otherName = lib_.getName();
+					String baseName = libName.replace(".so", "");
+					if (otherName.contains("neon")
+							&& otherName.startsWith(baseName)) {
+						hasNeonVersion = true;
+						break;
+					}
+				}
+
+				if (hasNeonVersion)
+					continue;
+			}
+
+			cores.add(new ModuleWrapper(ctx, lib));
+		}
+
+		// Sort the list of cores alphabetically
+		Collections.sort(cores);
+		return cores;
+	}
+	
+	public static ModuleWrapper findCore(List<ModuleWrapper> cores,
+			String strName) {
+		for (ModuleWrapper core : cores) {
+			if (strName.equals(core.getText()))
+				return core;
+		}
 		return null;
 	}
 }

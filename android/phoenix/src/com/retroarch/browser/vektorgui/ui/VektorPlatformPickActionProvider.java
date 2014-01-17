@@ -94,7 +94,7 @@ public class VektorPlatformPickActionProvider extends ActionProvider implements
 
 		final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(
 				mContext, android.R.layout.select_dialog_singlechoice);
-		final List<ModuleWrapper> cores = getCoreList();
+		final List<ModuleWrapper> cores = VektorGuiPlatformHelper.getCoreList(mContext);
 		prepareAdapter(platform, cores, arrayAdapter);
 		builderSingle.setNegativeButton("Cancel",
 				new DialogInterface.OnClickListener() {
@@ -112,21 +112,12 @@ public class VektorPlatformPickActionProvider extends ActionProvider implements
 					public void onClick(DialogInterface dialog, int which) {
 						String strName = arrayAdapter.getItem(which);
 						
-						final ModuleWrapper item = findCore(cores, strName);
+						final ModuleWrapper item = VektorGuiPlatformHelper.findCore(cores, strName);
 						theActivity.setModuleAndPlatform(item
 								.getUnderlyingFile().getAbsolutePath(), item
 								.getText(), platform,item.getSupportedExtensions());
 						UserPreferences.updateConfigFile(theActivity);
 
-					}
-
-					private ModuleWrapper findCore(List<ModuleWrapper> cores,
-							String strName) {
-						for (ModuleWrapper core : cores) {
-							if (strName.equals(core.getText()))
-								return core;
-						}
-						return null;
 					}
 				});
 		builderSingle.show();
@@ -163,43 +154,4 @@ public class VektorPlatformPickActionProvider extends ActionProvider implements
 
 	}
 
-	public List<ModuleWrapper> getCoreList() {
-		final String cpuInfo = UserPreferences.readCPUInfo();
-		final boolean cpuIsNeon = cpuInfo.contains("neon");
-		// Populate the list
-		final List<ModuleWrapper> cores = new ArrayList<ModuleWrapper>();
-		final File[] libs = new File(mContext.getApplicationInfo().dataDir,
-				"cores").listFiles();
-		for (final File lib : libs) {
-			String libName = lib.getName();
-
-			// Never append a NEON lib if we don't have NEON.
-			if (libName.contains("neon") && !cpuIsNeon)
-				continue;
-
-			// If we have a NEON version with NEON capable CPU,
-			// never append a non-NEON version.
-			if (cpuIsNeon && !libName.contains("neon")) {
-				boolean hasNeonVersion = false;
-				for (final File lib_ : libs) {
-					String otherName = lib_.getName();
-					String baseName = libName.replace(".so", "");
-					if (otherName.contains("neon")
-							&& otherName.startsWith(baseName)) {
-						hasNeonVersion = true;
-						break;
-					}
-				}
-
-				if (hasNeonVersion)
-					continue;
-			}
-
-			cores.add(new ModuleWrapper(mContext, lib));
-		}
-
-		// Sort the list of cores alphabetically
-		Collections.sort(cores);
-		return cores;
-	}
 }

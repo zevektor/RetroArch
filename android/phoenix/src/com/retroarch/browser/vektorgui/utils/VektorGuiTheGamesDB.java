@@ -81,10 +81,7 @@ public class VektorGuiTheGamesDB {
 				VektorGuiTheGamesDB.xml = response;
 			}
 		};
-
-		// return XML\\
 		return;
-
 	}
 
 	private String getPlatform() {

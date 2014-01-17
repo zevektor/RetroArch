@@ -77,9 +77,9 @@
         <activity
             android:name="com.retroarch.browser.vektorgui.VektorGuiActivity"
             android:parentActivityName="com.retroarch.browser.mainmenu.MainMenuActivity"
-            android:theme="@style/Theme.AppCompat" >
-
-            <!-- Parent activity meta-data to support API level 7+ -->
+            android:theme="@style/Theme.AppCompat"
+            android:exported="true"
+            android:launchMode="singleInstance">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.retroarch.browser.mainmenu.MainMenuActivity" />

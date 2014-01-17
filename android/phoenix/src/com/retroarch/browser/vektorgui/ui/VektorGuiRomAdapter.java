@@ -29,9 +29,10 @@ public class VektorGuiRomAdapter extends BaseAdapter {
 		this.roms = roms;
 		this.mContext = ctx;
 		Collections.sort(roms, new Comparator<VektorGuiRomItem>() {
-		    public int compare(VektorGuiRomItem vgri1, VektorGuiRomItem vgri2) {
-		        return vgri1.getGameName().toLowerCase().compareTo(vgri2.getGameName().toLowerCase());
-		    }
+			public int compare(VektorGuiRomItem vgri1, VektorGuiRomItem vgri2) {
+				return vgri1.getGameName().toLowerCase()
+						.compareTo(vgri2.getGameName().toLowerCase());
+			}
 		});
 	}
 
@@ -52,7 +53,6 @@ public class VektorGuiRomAdapter extends BaseAdapter {
 
 	@Override
 	public View getView(int position, View v, ViewGroup vg) {
-		Log.d("VektorGuiRomAdapter::getView()","Generating view for pos:"+position+", selectedItem seems to be:"+selectedItem);
 		VektorGuiRomItem entry = roms.get(position);
 		if (null == v) {
 			LayoutInflater inflater = (LayoutInflater) mContext
@@ -86,7 +86,8 @@ public class VektorGuiRomAdapter extends BaseAdapter {
 		selectedItem = position;
 		notifyDataSetChanged();
 	}
-	public int getSelectedItem(){
+
+	public int getSelectedItem() {
 		return selectedItem;
 	}
 }
