@@ -74,6 +74,9 @@ public class VektorGuiRomItem {
 	public String getGameDescription() {
 		return strGameDescription;
 	}
+	public void setGameCRC(String crc){
+		strGameCRC=crc;
+	}
 	
 	public Properties toProperties(){
 		Properties props = new Properties();

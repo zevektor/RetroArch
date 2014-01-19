@@ -1,5 +1,7 @@
 package com.retroarch.browser.vektorgui.utils;
 
+import java.util.HashMap;
+
 import com.retroarch.browser.vektorgui.VektorGuiActivity;
 import com.retroarch.browser.vektorgui.ui.VektorGuiRomItem;
 
@@ -13,50 +15,51 @@ import android.net.Uri;
 import android.util.Log;
 
 public class VektorGuiBroadcastReceiver<item> extends BroadcastReceiver {
-	private long enqueued;
 	private DownloadManager mManager;
 	private VektorGuiActivity rootActivity;
-	private VektorGuiRomItem item;
-	//private XPMBSubmenu_ROM submenu;
+	// Downloads Map here to register just one receiver!
+	private HashMap<Long, VektorGuiRomItem> activeDls = new HashMap<Long, VektorGuiRomItem>();
 
-	public VektorGuiBroadcastReceiver(long enqueued, DownloadManager mManager,
-			VektorGuiActivity rootActivity, VektorGuiRomItem item) {
-		this.enqueued = enqueued;
-		Log.i("BroadcastReceiver", "DownID=" + enqueued);
+	public VektorGuiBroadcastReceiver(DownloadManager mManager,
+			VektorGuiActivity rootActivity) {
 		this.mManager = mManager;
 		this.rootActivity = rootActivity;
-		this.item = item;
-		//this.submenu = submenu;
 	}
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
-		String action = intent.getAction();
-		if (DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(action)) {
-			long downloadId = intent.getLongExtra(
-					DownloadManager.EXTRA_DOWNLOAD_ID, 0);
-			if (downloadId == enqueued) {
-				Query query = new Query();
-				query.setFilterById(enqueued); // dlid
-				Cursor c = mManager.query(query);
+		if (intent.getAction().equals(DownloadManager.ACTION_DOWNLOAD_COMPLETE)) {
+			final long dlId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID,
+					0);
+			if (activeDls.containsKey(dlId)) {
+				Log.i("VektorGuiBroadcastReceiver::onReceive()",dlId+" - "+activeDls.get(dlId).getGameName());
+				Query q = new Query().setFilterById(dlId);
+				Cursor c = mManager.query(q);
 				if (c.moveToFirst()) {
 					int columnIndex = c
 							.getColumnIndex(DownloadManager.COLUMN_STATUS);
-					if (DownloadManager.STATUS_SUCCESSFUL == c
-							.getInt(columnIndex)) {
+					if (c.getInt(columnIndex) == DownloadManager.STATUS_SUCCESSFUL) {
 						String uriString = c
 								.getString(c
 										.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI));
 						final Uri fileUri = Uri.parse(uriString);
-						rootActivity.addDecodingJob(fileUri, item.getGameName(),
-								item);
-						c.close();
-						return;
+						rootActivity.runOnUiThread(new Runnable(){
+							@Override
+							public void run() {
+								// TODO Auto-generated method stub
+								rootActivity.addDecodingJob(fileUri,activeDls.get(dlId));
+							}
+							
+						});
+						activeDls.remove(dlId);
 					}
 				}
-				c.close();
 			}
 		}
+	}
+
+	public void addGameId(long dlId, VektorGuiRomItem item) {
+		activeDls.put(dlId, item);
 	}
 
 }

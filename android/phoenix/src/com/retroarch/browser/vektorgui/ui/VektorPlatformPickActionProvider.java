@@ -115,7 +115,7 @@ public class VektorPlatformPickActionProvider extends ActionProvider implements
 						final ModuleWrapper item = VektorGuiPlatformHelper.findCore(cores, strName);
 						theActivity.setModuleAndPlatform(item
 								.getUnderlyingFile().getAbsolutePath(), item
-								.getText(), platform,item.getSupportedExtensions());
+								.getText(), platform,item.getSupportedExtensions(),true);
 						UserPreferences.updateConfigFile(theActivity);
 
 					}

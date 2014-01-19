@@ -46,6 +46,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -84,12 +85,12 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 	private List<String> supported_extensions;
 	private MediaPlayer mp;
 	private String platformPath;
-
+	private VektorGuiBroadcastReceiver receiver;
 	/**
 	 * Setting the ThreadPoolExecutor(s).
 	 */
 	private static final int CORE_POOL_SIZE = 5;
-	private static final int MAXIMUM_POOL_SIZE = 5;
+	private static final int MAXIMUM_POOL_SIZE = 128;
 	private static final int NUMBER_OF_CORES = Runtime.getRuntime()
 			.availableProcessors();
 	private final BlockingQueue<Runnable> mDownloadWorkQueue = new LinkedBlockingQueue<Runnable>();
@@ -101,7 +102,7 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 			NUMBER_OF_CORES, NUMBER_OF_CORES, KEEP_ALIVE_TIME,
 			KEEP_ALIVE_TIME_UNIT, mDecodeWorkQueue);
 	private static final TimeUnit KEEP_ALIVE_TIME_UNIT;
-	private static final int KEEP_ALIVE_TIME = 1;
+	private static final int KEEP_ALIVE_TIME = 300;
 	static {
 		KEEP_ALIVE_TIME_UNIT = TimeUnit.SECONDS;
 	}
@@ -114,7 +115,8 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 	private File romFolder;
 	private VektorGuiDatabaseHelper myDbHelper;
 	private DownloadManager mManager;
-	private HashMap<String, VektorGuiBroadcastReceiver> receivers = new HashMap<String, VektorGuiBroadcastReceiver>();
+	// private HashMap<String, VektorGuiBroadcastReceiver> receivers = new
+	// HashMap<String, VektorGuiBroadcastReceiver>();
 	private String platform;
 
 	private void defineUI() {
@@ -130,7 +132,6 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 		actionBar.setDisplayHomeAsUpEnabled(true);
 		this.getActionBar().setDisplayShowCustomEnabled(true);
 		this.getActionBar().setDisplayShowTitleEnabled(false);
-
 		LayoutInflater inflator = (LayoutInflater) this
 				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		View v = inflator.inflate(R.layout.vektor_gui_titlecustom, null);
@@ -139,6 +140,7 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 		this.getActionBar().setCustomView(v);
 		playgame.setOnClickListener(this);
 		// showLeftPanel(false);
+
 	}
 
 	@Override
@@ -151,29 +153,29 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 		mManager = (DownloadManager) getSystemService(Activity.DOWNLOAD_SERVICE);
 		setContentView(R.layout.vektor_gui_layout);
 		defineUI();
-		// If last game is not null, try to load it.
-		File history = new File(this.getApplicationInfo().dataDir,
-				"retroarch-history.txt");
-		try {
-			BufferedReader br = new BufferedReader(new InputStreamReader(
-					new FileInputStream(history)));
-			String game = br.readLine();
-			String core = br.readLine();
-			String name = br.readLine();
-			String platform = UserPreferences.getPreferences(this).getString(
-					"vektor_gui_last_platform", null);
-			setModuleAndPlatform(core, name, platform, VektorGuiPlatformHelper
-					.findCore(VektorGuiPlatformHelper.getCoreList(this), name)
-					.getSupportedExtensions());
-		} catch (IOException e) {
-		}
+		SharedPreferences prefs = UserPreferences.getPreferences(this);
+		String core = prefs.getString("libretro_path", null);
+		String name = prefs.getString("libretro_name", null);
+		String platform = prefs.getString("vektor_gui_last_platform", null);
+		setModuleAndPlatform(core, name, platform, VektorGuiPlatformHelper
+				.findCore(VektorGuiPlatformHelper.getCoreList(this), name)
+				.getSupportedExtensions(), true);
+		receiver = new VektorGuiBroadcastReceiver(mManager, this);
+		registerReceiver(receiver, new IntentFilter(
+				DownloadManager.ACTION_DOWNLOAD_COMPLETE));
 	}
 
 	@Override
 	protected void onPause() {
-		super.onPause();
 		mp.release();
 		mp = null;
+		super.onPause();
+	}
+
+	@Override
+	protected void onStop() {
+		unregisterReceiver(receiver);
+		super.onStop();
 	}
 
 	@Override
@@ -196,13 +198,19 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 	}
 
 	public void setModuleAndPlatform(String core_path, String core_name,
-			String platform, List<String> supported_extensions) {
+			String platform, List<String> supported_extensions, boolean init) {
+		if (!init)
+			return;
 		creatingUI = true;
+		if (null == core_path || null == core_name || null == platform)
+			return;
 		UserPreferences.updateConfigFile(this);
 		SharedPreferences prefs = UserPreferences.getPreferences(this);
 		SharedPreferences.Editor edit = prefs.edit();
 		edit.putString("libretro_path", core_path);
 		edit.putString("libretro_name", core_name);
+		edit.putString("vektor_gui_last_platform", platform);
+		edit.commit();
 		edit.commit();
 		this.platform = platform;
 		VektorGuiTextView platform_name = (VektorGuiTextView) findViewById(R.id.vektor_gui_list_platformname_title);
@@ -221,15 +229,68 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 		romFolder = new File(prefs.getString("rgui_browser_directory", null),
 				this.platformPath);
 		initRoms();
+		initMetaData();
 		creatingUI = false;
+
+	}
+
+	private void initMetaData() {
+
+		for (VektorGuiRomItem item : roms) {
+			
+		}
+
+		if (!platformPath.equals("PSX")) {
+			new AsyncTask<Void, Void, Void>() {
+
+				@Override
+				protected Void doInBackground(Void... params) {
+					for (VektorGuiRomItem item : roms) {
+						if (item.getGameCRC() == null) {
+							item.setGameCRC(calculateCRC32(item.getROMPath()));
+						}
+						loadAssociatedMetadata(item);
+					}
+					return null;
+				}
+
+				@Override
+				protected void onPostExecute(Void result) {
+					for (VektorGuiRomItem item : roms) {
+						updateUI(item, romListAdapter.getSelectedItem());
+					}
+				}
+			}.execute();
+		} else {
+			new AsyncTask<Void, Void, Void>() {
+
+				@Override
+				protected Void doInBackground(Void... params) {
+					for (VektorGuiRomItem item : roms) {
+						if (item.getGameCRC() == null) {
+							item.setGameCRC(getPSXId(item.getROMPath()));
+						}
+						loadAssociatedMetadata(item);
+					}
+					return null;
+				}
+
+				@Override
+				protected void onPostExecute(Void result) {
+					for (VektorGuiRomItem item : roms) {
+						updateUI(item, romListAdapter.getSelectedItem());
+					}
+				}
+			}.execute();
+		}
 	}
 
 	private void initRoms() {
+		if (!platformPath.equalsIgnoreCase("PSX"))
+			ridROMInfoDat = new ROMInfo(this.getResources().getXml(xmlId));
 		SharedPreferences prefs = UserPreferences.getPreferences(this);
 		if (null != prefs.getString("rgui_browser_directory", null)) {
-
 			romFolder.mkdirs();
-			long start = System.currentTimeMillis();
 			if (!romFolder.isDirectory()) {
 				Log.e("VektorGuiActivity::initRoms()",
 						"Can't access/create folder "
@@ -246,18 +307,15 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 					return;
 				}
 			}
-			if (!platformPath.equalsIgnoreCase("PSX"))
-				ridROMInfoDat = new ROMInfo(this.getResources().getXml(xmlId),
-						ROMInfo.TYPE_CRC);
-
-			try {
-				roms.clear();
-				File[] storPtCont = romFolder.listFiles();
-				for (File f : storPtCont) {
-					if (!f.getName().startsWith(".")
-							&& f.getName().endsWith(".zip")
-							&& !platformPath.equalsIgnoreCase("PSX")) {
-						ZipFile zf = new ZipFile(f, ZipFile.OPEN_READ);
+			roms.clear();
+			File[] romFileList = romFolder.listFiles();
+			for (File f : romFileList) {
+				if (!f.getName().startsWith(".")
+						&& f.getName().toLowerCase().endsWith(".zip")
+						&& !platformPath.equalsIgnoreCase("PSX")) {
+					ZipFile zf;
+					try {
+						zf = new ZipFile(f, ZipFile.OPEN_READ);
 						Enumeration<? extends ZipEntry> ze = zf.entries();
 						while (ze.hasMoreElements()) {
 							ZipEntry zef = ze.nextElement();
@@ -267,54 +325,24 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 										.toUpperCase(
 												this.getResources()
 														.getConfiguration().locale);
-								VektorGuiRomItem cItem = new VektorGuiRomItem(
-										f, gameCRC);
-								loadAssociatedMetadata(cItem);
-								roms.add(cItem);
-								break;
+								roms.add(new VektorGuiRomItem(f, gameCRC));
 							}
 						}
 						zf.close();
-					} else if (extensionCheck(f.getName())
-							&& !platformPath.equalsIgnoreCase("PSX")) {
-
-						CRC32 cCRC = new CRC32();
-						InputStream fi = new BufferedInputStream(
-								new FileInputStream(f));
-
-						int cByte = 0;
-						byte[] buf = new byte[1024 * 512];
-						while ((cByte = fi.read(buf)) > 0) {
-							cCRC.update(buf, 0, cByte);
-						}
-						fi.close();
-						String gameCRC = Long
-								.toHexString(cCRC.getValue())
-								.toUpperCase(
-										this.getResources().getConfiguration().locale);
-						VektorGuiRomItem cItem = new VektorGuiRomItem(f,
-								gameCRC);
-						loadAssociatedMetadata(cItem);
-						roms.add(cItem);
-					} else if (!f.getName().startsWith(".")
-							&& !f.getName().contains("SCPH")
-							&& extensionCheck(f.getName())
-							&& platformPath.equalsIgnoreCase("PSX")) {
-						VektorGuiRomItem cItem = new VektorGuiRomItem(f,
-								getPSXId(f));
-						loadAssociatedMetadata(cItem);
-						roms.add(cItem);
+					} catch (IOException e) {
 					}
-
+				} else if (extensionCheck(f.getName())
+						&& !platformPath.equalsIgnoreCase("PSX")) {
+					roms.add(new VektorGuiRomItem(f, null));
+				} else if (!f.getName().startsWith(".")
+						&& !f.getName().contains("SCPH") // Skip bios .bin file
+						&& extensionCheck(f.getName())
+						&& platformPath.equalsIgnoreCase("PSX")) {
+					VektorGuiRomItem cItem = new VektorGuiRomItem(f, null);
+					roms.add(cItem);
 				}
-			} catch (Exception e) {
-				// TODO Handle errors when loading found ROMs
-				e.printStackTrace();
 			}
-			Log.i("InitRoms", "Total time "
-					+ (System.currentTimeMillis() - start) + " ms.");
 		}
-
 		// Once it's done, we populate the list.
 		romList = (ListView) findViewById(R.id.vektor_gui_game_list);
 		romList.setAdapter(romListAdapter);
@@ -338,13 +366,15 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 				R.string.vektor_gui_list_gamesfound).replace("[%d]",
 				Integer.toString(roms.size())));
 		numGames.setVisibility(View.VISIBLE);
-
 	}
 
 	private boolean extensionCheck(String name) {
 		for (String ext : this.supported_extensions) {
 			if (name.toLowerCase(this.getResources().getConfiguration().locale)
-					.endsWith("." + ext)) {
+					.endsWith(
+							"."
+									+ ext.toLowerCase(this.getResources()
+											.getConfiguration().locale))) {
 				return true;
 			}
 		}
@@ -421,6 +451,30 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 		}
 	}
 
+	private String calculateCRC32(File f) {
+		String gameCRC = null;
+		CRC32 cCRC = new CRC32();
+		InputStream fi;
+		try {
+			fi = new BufferedInputStream(new FileInputStream(f));
+			int cByte = 0;
+			byte[] buf = new byte[1024 * 512];
+			while ((cByte = fi.read(buf)) > 0) {
+				cCRC.update(buf, 0, cByte);
+			}
+			fi.close();
+			gameCRC = Long.toHexString(cCRC.getValue()).toUpperCase(
+					this.getResources().getConfiguration().locale);
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return gameCRC;
+	}
+
 	private String getPSXId(File f) {
 		Log.i("GetPSXID", f.getName());
 		FileInputStream fin;
@@ -459,14 +513,12 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 
 	private void loadAssociatedMetadata(VektorGuiRomItem item) {
 		File resStor = new File(romFolder, "Resources");
-		Log.d("VektorGuiActivity::loadAssociatedMetaData()", item.getGameName()
-				+ " - " + item.getRomPath());
+		// Log.d("VektorGuiActivity::loadAssociatedMetaData()",
+		// item.getGameName()
+		// + " - " + item.getRomPath());
 		if (platformPath.equalsIgnoreCase("PSX")) {
 			String id = item.getGameCRC();
-			// Log.i("GameID",id);
 			String title = myDbHelper.getGameTitle(id);
-			// Log.i("[PSX] GAME INFO", id + " " + title);
-			// item.setGameName(title);
 			if (resStor.exists()) {
 				try {
 					File fExtRes = new File(resStor, (item.getGameName()
@@ -510,7 +562,7 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 						.getGameCRC());
 				if (platformPath.equals("GBC") && rinCData == null) {
 					ridROMInfoDat = new ROMInfo(this.getResources().getXml(
-							R.xml.rominfo_gb), ROMInfo.TYPE_CRC);
+							R.xml.rominfo_gb));
 					rinCData = ridROMInfoDat.getNode(item.getGameCRC());
 				}
 				if (rinCData != null) {
@@ -565,8 +617,7 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 		}
 	}
 
-	public void addDecodingJob(final Uri fileUri, final String gameName,
-			final VektorGuiRomItem item) {
+	public void addDecodingJob(final Uri fileUri, final VektorGuiRomItem item) {
 		mDecodeThreadPool.execute(new Runnable() {
 
 			@Override
@@ -593,8 +644,6 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 				(gameName.contains("[") ? gameName.substring(0,
 						gameName.indexOf("[")) : gameName)
 						+ "-CV.jpg");
-		this.unregisterReceiver(receivers.get(gameName));
-		receivers.remove(gameName);
 		if (fExtRes.exists()) {
 
 			try {
@@ -651,18 +700,11 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 		@SuppressWarnings("rawtypes")
 		public void run() {
 			android.os.Process
-					.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
+					.setThreadPriority(android.os.Process.THREAD_PRIORITY_DEFAULT);
+			Log.i("ROMTask","Game: "+item.getGameName());
 			VektorGuiTheGamesDB tgdb = new VektorGuiTheGamesDB(resStor,
 					activity, title, platform, item);
-			Long dlId = tgdb.DownloadFromUrl();
-			if (null != dlId) {
-				VektorGuiBroadcastReceiver receiver = new VektorGuiBroadcastReceiver(
-						dlId, mManager, activity, item);
-				VektorGuiActivity.this.receivers.put(item.getGameName(),
-						receiver);
-				activity.registerReceiver(receiver, new IntentFilter(
-						DownloadManager.ACTION_DOWNLOAD_COMPLETE));
-			}
+			tgdb.DownloadFromUrl();
 			return;
 		}
 
@@ -677,7 +719,11 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 		gametitle.setText(item.getGameName());
 		gamedesc.setText(item.getGameDescription());
 		gameyear.setText(item.getGameYear());
-		gamecover.setImageDrawable(item.getGameCover());
+		if (null != item.getGameCover())
+			gamecover.setImageDrawable(item.getGameCover());
+		else
+			gamecover.setImageDrawable(getResources().getDrawable(
+					R.drawable.vektor_nocover));
 		if (position != romListAdapter.getSelectedItem() && !creatingUI) {
 			mp.start();
 		}
@@ -694,9 +740,6 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 		final String libretro_path = prefs.getString("libretro_path", "");
 
 		UserPreferences.updateConfigFile(getApplicationContext());
-		SharedPreferences.Editor edit = prefs.edit();
-		edit.putString("vektor_gui_last_platform", platform);
-		edit.commit();
 		String current_ime = Settings.Secure.getString(getApplicationContext()
 				.getContentResolver(), Settings.Secure.DEFAULT_INPUT_METHOD);
 		Toast.makeText(getApplicationContext(),
@@ -787,5 +830,9 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 			romList.getSelectedView().requestFocus();
 		return true;
 
+	}
+
+	public void addGameToReceiver(long dlId, VektorGuiRomItem item) {
+		receiver.addGameId(dlId, item);
 	}
 }

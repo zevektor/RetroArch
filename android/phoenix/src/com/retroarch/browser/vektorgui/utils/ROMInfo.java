@@ -1,4 +1,3 @@
-
 package com.retroarch.browser.vektorgui.utils;
 
 import java.util.ArrayList;
@@ -11,7 +10,8 @@ import android.content.res.XmlResourceParser;
 public class ROMInfo {
 
 	public class ROMInfoNode_ROM {
-		private String strROMName = null, strROMCRC = null, strROMStatus = null;
+		private String strROMName = null, strROMCRC = null,
+				strROMStatus = null;
 		private int intROMSize = 0;
 
 		public ROMInfoNode_ROM(String name, int size, String crc, String status) {
@@ -135,11 +135,9 @@ public class ROMInfo {
 	public static final int TYPE_CRC = 0, TYPE_MD5 = 1, TYPE_SHA1 = 2;
 
 	private Hashtable<String, ROMInfoNode> htItems = null;
-	private int intCheckType = 0;
 	private ROMInfoHeader mHeader = null;
 
-	public ROMInfo(XmlResourceParser src, int checkType) {
-		intCheckType = checkType;
+	public ROMInfo(XmlResourceParser src) {
 
 		try {
 			int eventType = src.getEventType();
@@ -205,32 +203,18 @@ public class ROMInfo {
 							grr = new ROMInfoNode_ROM(src.getAttributeValue(
 									null, "name"), src.getAttributeIntValue(
 									null, "size", 0), src.getAttributeValue(
-									null, "crc"),
-									src.getAttributeValue(null, "status"));
+									null, "crc"), src.getAttributeValue(null,
+									"status"));
 						}
 					}
 					break;
 				case XmlResourceParser.END_TAG:
 					cName = src.getName();
 					if (cName.equals("game")) {
-						switch (intCheckType) {
-						/*case TYPE_MD5:
-							htItems.put(
-									//grr.getROMMD5(),
-									new ROMInfoNode(gn, gc, gd, gr, grr));
-							break;
-						case TYPE_SHA1:
-							htItems.put(
-									//grr.getROMSHA1(),
-									new ROMInfoNode(gn, gc, gd,	gr, grr));
-							break;*/
-						case TYPE_CRC:
-						default:
-							htItems.put(
-									grr.getROMCRC(),
-									new ROMInfoNode(gn, gc, gd, gr, grr));
-							break;
-						}
+
+						htItems.put(grr.getROMCRC(), new ROMInfoNode(gn, gc,
+								gd, gr, grr));
+
 						gn = null;
 						gc = null;
 						gd = null;
@@ -259,20 +243,16 @@ public class ROMInfo {
 		}
 	}
 
-	public int getCheckType() {
-		return intCheckType;
-	}
-	
-	public ROMInfoHeader getHeader(){
+	public ROMInfoHeader getHeader() {
 		return mHeader;
 	}
 
-	public int getNumNodes(){
+	public int getNumNodes() {
 		return htItems.size();
 	}
-	
-	public ROMInfoNode getNode(String key){
+
+	public ROMInfoNode getNode(String key) {
 		return htItems.get(key);
 	}
-	
+
 }

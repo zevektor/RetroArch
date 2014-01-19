@@ -20,6 +20,7 @@ import org.apache.http.util.EntityUtils;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
+import com.retroarch.browser.vektorgui.VektorGuiActivity;
 import com.retroarch.browser.vektorgui.ui.VektorGuiRomItem;
 import com.retroarch.browser.vektorgui.utils.Serialization.gameClass;
 
@@ -36,7 +37,7 @@ import android.util.Log;
 
 public class VektorGuiTheGamesDB {
 
-	private static class XPMB_TheGamesDBClient {
+	private static class TheGamesDBClient {
 		public static final AsyncHttpClient client = new AsyncHttpClient();
 		private static final String BASEURL = "http://thegamesdb.net/api/";
 
@@ -53,16 +54,16 @@ public class VektorGuiTheGamesDB {
 	private static final int THRESHOLD = 50;
 	private String platform;
 	private String gameName;
-	private Activity callerActivity;
+	private VektorGuiActivity callerActivity;
 	private File romRoot;
 	private VektorGuiRomItem item;
 
-	public VektorGuiTheGamesDB(File romRoot, Activity callerActivity,
+	public VektorGuiTheGamesDB(File romRoot, VektorGuiActivity callerActivity,
 			String gameName, VektorGuiRomItem item) {
 		this(romRoot, callerActivity, gameName, null, item);
 	}
 
-	public VektorGuiTheGamesDB(File romRoot, Activity callerActivity,
+	public VektorGuiTheGamesDB(File romRoot, VektorGuiActivity callerActivity,
 			String gameName, String platform, VektorGuiRomItem item) {
 		this.romRoot = romRoot;
 		this.gameName = gameName;
@@ -77,7 +78,7 @@ public class VektorGuiTheGamesDB {
 		AsyncHttpResponseHandler resHandlerDir = new AsyncHttpResponseHandler() {
 			@Override
 			public void onSuccess(String response) {
-				Log.i("Success", "OK=" + response);
+				//Log.i("Success", "OK=" + response);
 				VektorGuiTheGamesDB.xml = response;
 			}
 		};
@@ -150,13 +151,11 @@ public class VektorGuiTheGamesDB {
 
 	private Long dlid = null;
 
-	public Long DownloadFromUrl() {
+	public boolean DownloadFromUrl() {
 		if (this.isOnline()) {
 			getCoverLink();
 		}
-		while (dlid == null) {
-		}
-		return (dlid == -1 ? null : dlid);
+		return this.isOnline();
 	}
 
 	private String coverURL = null;
@@ -179,7 +178,6 @@ public class VektorGuiTheGamesDB {
 			@TargetApi(Build.VERSION_CODES.HONEYCOMB)
 			@Override
 			public void onSuccess(String response) {
-				Log.i("Success", "OK");
 				VektorGuiTheGamesDB.xml = response;
 				int matchRate = 0, bestMatchId = -1;
 				ArrayList<gameClass> games = VektorGuiGameSAXParser.parse(xml);
@@ -196,19 +194,13 @@ public class VektorGuiTheGamesDB {
 				if (bestMatchId > -1) { //If there's a candidate, we download data for it. 
 					coverURL = VektorGuiGameSAXParser.getBaseURL()
 							+ games.get(bestMatchId).getURL();
+					item.setGameName(games.get(bestMatchId).getTitle());
 					item.setGameYear(games.get(bestMatchId).getYear());
 					item.setGameDescription(games.get(bestMatchId)
 							.getDescription());
-					Log.i("Game data",
-							"Name=" + cleanedGN + " Year " + item.getGameYear()
-									+ " Overview " + item.getGameDescription());
 					int i = 0;
 					i = bestMatchId;
-					Log.i("Performance",
-							"(" + gameName + ") Time="
-									+ (System.currentTimeMillis() - start)
-									+ "ms. Attempts=" + (i) + ". Result="
-									+ coverURL);
+					
 					String DownloadUrl = (coverURL == null ? null : coverURL
 							.replace("http://", ""));
 					if (DownloadUrl != null) {
@@ -240,11 +232,11 @@ public class VektorGuiTheGamesDB {
 										Request.NETWORK_MOBILE
 												| Request.NETWORK_WIFI);
 						long dlId = manager.enqueue(req);
-						dlid = dlId;
+						callerActivity.addGameToReceiver(dlId,item);
 					}
 				}
 			}
 		};
-		XPMB_TheGamesDBClient.get(URL, null, resHandlerDir);
+		TheGamesDBClient.get(URL, null, resHandlerDir);
 	}
 }

@@ -47,7 +47,7 @@ public class VektorGuiGameSAXParser {
 		} 
 		catch(MySAXTerminatorException e){
 			output.addAll(handler.getParsedData());
-			Log.i("Catch!","Output size is:"+output.size());
+			//Log.i("Catch!","Output size is:"+output.size());
 			return output;
 		}
 		catch (ParserConfigurationException e) {
