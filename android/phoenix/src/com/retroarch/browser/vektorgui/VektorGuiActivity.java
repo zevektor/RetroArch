@@ -493,6 +493,7 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 				}
 			} else {
 				if (!platformPath.equalsIgnoreCase("PSX")) {
+					item.setGameCRC(calculateCRC32(item.getROMPath()));
 					ROMInfo.ROMInfoNode rNode = ridROMInfoDat.getNode(item
 							.getGameCRC());
 					if (rNode != null) {
@@ -512,9 +513,9 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 					} else
 						item.setGameName(item.getGameName().substring(0,
 								item.getGameName().lastIndexOf(".")));
-					item.setGameCRC(calculateCRC32(item.getROMPath()));
 				} else {
 					// PS1 Games
+					item.setGameCRC(getPSXId(item.getROMPath()));
 					String title = myDbHelper.getGameTitle(item.getGameCRC());
 					if (title != null) {
 						if (title.indexOf("[") != -1)
@@ -528,7 +529,6 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 										0,
 										item.getROMPath().getName()
 												.lastIndexOf(".")));
-					item.setGameCRC(getPSXId(item.getROMPath()));
 				}
 			}
 			File coverStor = new File(resStor, item.getROMPath().getName()
