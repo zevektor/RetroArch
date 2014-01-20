@@ -53,36 +53,18 @@ public class VektorGuiTheGamesDB {
 
 	private static final int THRESHOLD = 50;
 	private String platform;
-	private String gameName;
 	private VektorGuiActivity callerActivity;
 	private File romRoot;
 	private VektorGuiRomItem item;
+	private DownloadManager mManager;
 
 	public VektorGuiTheGamesDB(File romRoot, VektorGuiActivity callerActivity,
-			String gameName, VektorGuiRomItem item) {
-		this(romRoot, callerActivity, gameName, null, item);
-	}
-
-	public VektorGuiTheGamesDB(File romRoot, VektorGuiActivity callerActivity,
-			String gameName, String platform, VektorGuiRomItem item) {
+			String platform, VektorGuiRomItem item, DownloadManager mManager) {
 		this.romRoot = romRoot;
-		this.gameName = gameName;
-		this.platform = platform;
 		this.callerActivity = callerActivity;
+		this.platform = platform;
 		this.item = item;
-	}
-
-	private static String xml = null;
-
-	private void getXmlFromUrl(String url) {
-		AsyncHttpResponseHandler resHandlerDir = new AsyncHttpResponseHandler() {
-			@Override
-			public void onSuccess(String response) {
-				//Log.i("Success", "OK=" + response);
-				VektorGuiTheGamesDB.xml = response;
-			}
-		};
-		return;
+		this.mManager = mManager;
 	}
 
 	private String getPlatform() {
@@ -149,8 +131,6 @@ public class VektorGuiTheGamesDB {
 
 	}
 
-	private Long dlid = null;
-
 	public boolean DownloadFromUrl() {
 		if (this.isOnline()) {
 			getCoverLink();
@@ -161,82 +141,71 @@ public class VektorGuiTheGamesDB {
 	private String coverURL = null;
 
 	@SuppressWarnings("deprecation")
-	private final void getCoverLink() {
-		final long start = System.currentTimeMillis();
-
-		final String cleanedGN = gameName.split("\\[")[0].split("\\(")[0];
-		String URL = "GetGame.php?name=" + URLEncoder.encode(cleanedGN);
+	private void getCoverLink() {
+		String url = "GetGame.php?name="
+				+ URLEncoder.encode(item.getGameName());
 		if (null != this.platform && !this.platform.equalsIgnoreCase("other")) {
-			URL += "&platform=" + URLEncoder.encode(getPlatform());
+			url += "&platform=" + URLEncoder.encode(getPlatform());
+			Log.i("GetCoverLink()", url);
+			TheGamesDBClient.get(url, null, resHandlerDir);
 		}
-		AsyncHttpResponseHandler resHandlerDir = new AsyncHttpResponseHandler() {
-			@Override
-			public void onFailure(Throwable error) {
-				dlid = (long) -1;
-			}
+	}
 
-			@TargetApi(Build.VERSION_CODES.HONEYCOMB)
-			@Override
-			public void onSuccess(String response) {
-				VektorGuiTheGamesDB.xml = response;
-				int matchRate = 0, bestMatchId = -1;
-				ArrayList<gameClass> games = VektorGuiGameSAXParser.parse(xml);
-				for (int j = 0; j < games.size(); j++) {
-					int rate = stringMatch(games.get(j).getTitle(), cleanedGN);
-					if (rate > matchRate
-							&& rate > VektorGuiTheGamesDB.THRESHOLD) {
+	private AsyncHttpResponseHandler resHandlerDir = new AsyncHttpResponseHandler() {
+		@Override
+		public void onSuccess(String response) {
+			// Log.i("onSuccess()",response);
+			try {
+				int matchRate = 0, bestMatch = -1;
+				ArrayList<gameClass> games = VektorGuiGameSAXParser
+						.parse(response);
+				for (int i = 0; i < games.size(); i++) {
+					int rate = stringMatch(games.get(i).getTitle(),
+							item.getGameName());
+					if (rate > THRESHOLD && rate > matchRate) {
 						matchRate = rate;
-						bestMatchId = j;
+						bestMatch = i;
 						if (matchRate == 101)
 							break;
 					}
 				}
-				if (bestMatchId > -1) { //If there's a candidate, we download data for it. 
+				if (bestMatch > -1) {
 					coverURL = VektorGuiGameSAXParser.getBaseURL()
-							+ games.get(bestMatchId).getURL();
-					item.setGameName(games.get(bestMatchId).getTitle());
-					item.setGameYear(games.get(bestMatchId).getYear());
-					item.setGameDescription(games.get(bestMatchId)
+							+ games.get(bestMatch).getURL();
+					item.setGameName(games.get(bestMatch).getTitle());
+					item.setGameDescription(games.get(bestMatch)
 							.getDescription());
-					int i = 0;
-					i = bestMatchId;
-					
-					String DownloadUrl = (coverURL == null ? null : coverURL
-							.replace("http://", ""));
-					if (DownloadUrl != null) {
-						if (!romRoot.exists()) {
-							romRoot.mkdirs();
-						}
-						DownloadUrl = ("http://" + Uri.encode(DownloadUrl))
-								.replace("%2F", "/");
-						File props = new File(romRoot, item.getGameName()
-								+ ".prop");
+					item.setGameYear(games.get(bestMatch).getYear());
+					if (coverURL != null) {
+						coverURL = coverURL.replace("http://", "");
+						coverURL = ("http://" + Uri.encode(coverURL)).replace(
+								"%2F", "/");
 						try {
-							item.toProperties().store(
-									new FileWriter(props, true), "");
+							File props = new File(romRoot, item.getROMPath()
+									.getName() + ".prop");
+							item.toProperties()
+									.store(new FileWriter(props), "");
 						} catch (IOException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
 						}
-
-						File file = new File(romRoot, gameName + "-CV.jpg");
-						DownloadManager manager = (DownloadManager) callerActivity
-								.getSystemService(Activity.DOWNLOAD_SERVICE);
-						Request req = new Request(Uri.parse(DownloadUrl))
-								.setNotificationVisibility(
-										Request.VISIBILITY_VISIBLE)
-								.setTitle(gameName)
+						File cover = new File(romRoot, item.getROMPath()
+								.getName() + "-CV.jpg");
+						Request req = new Request(Uri.parse(coverURL))
+								.setTitle(item.getGameName())
 								.setDescription(getPlatform())
-								.setDestinationUri(Uri.fromFile(file))
+								.setDestinationUri(Uri.fromFile(cover))
 								.setAllowedNetworkTypes(
 										Request.NETWORK_MOBILE
-												| Request.NETWORK_WIFI);
-						long dlId = manager.enqueue(req);
-						callerActivity.addGameToReceiver(dlId,item);
+												| Request.NETWORK_WIFI)
+								.setNotificationVisibility(
+										Request.VISIBILITY_VISIBLE);
+						callerActivity.addGameToReceiver(mManager.enqueue(req),
+								item);
 					}
+
 				}
+			} catch (NullPointerException e) {
+				e.printStackTrace();
 			}
-		};
-		TheGamesDBClient.get(URL, null, resHandlerDir);
-	}
+		}
+	};
 }

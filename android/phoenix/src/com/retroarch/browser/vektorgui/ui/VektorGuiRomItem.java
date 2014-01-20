@@ -6,16 +6,13 @@ import java.util.Properties;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
 
-
 public class VektorGuiRomItem {
 
 	private Drawable bmGameCover = null, bmGameBackground = null;
 	private File fROMPath = null;
-	private String strGameName = null, 
-			//strGameCode = null,
-			strGameCRC = null,
-			strGameDescription = null,
-			strGameYear = null;
+	private String strGameName = null,
+	// strGameCode = null,
+			strGameCRC = null, strGameDescription = null, strGameYear = null;
 
 	public VektorGuiRomItem(File romPath, String gameCRC) {
 		fROMPath = romPath;
@@ -27,26 +24,18 @@ public class VektorGuiRomItem {
 		return fROMPath;
 	}
 
-	public void setGameYear(String gameYear){
+	public void setGameYear(String gameYear) {
 		strGameYear = gameYear;
 	}
-	
-	public String getGameYear(){	
+
+	public String getGameYear() {
 		return strGameYear;
 	}
-	
-	public String getRomPath(){
+
+	public String getRomPath() {
 		return fROMPath.getAbsolutePath();
 	}
-	/*
-	public void setGameBackground(Drawable gameBackground) {
-		bmGameBackground = gameBackground;
-	}
 
-	public Drawable getGameBackground() {
-		return bmGameBackground;
-	}
-	*/
 	public void setGameCover(Drawable cover) {
 		bmGameCover = cover;
 	}
@@ -66,7 +55,7 @@ public class VektorGuiRomItem {
 	public String getGameCRC() {
 		return strGameCRC;
 	}
-	
+
 	public void setGameDescription(String gameDescription) {
 		strGameDescription = gameDescription;
 	}
@@ -74,26 +63,35 @@ public class VektorGuiRomItem {
 	public String getGameDescription() {
 		return strGameDescription;
 	}
-	public void setGameCRC(String crc){
-		strGameCRC=crc;
+
+	public void setGameCRC(String crc) {
+		strGameCRC = crc;
 	}
-	
-	public Properties toProperties(){
+
+	public Properties toProperties() {
 		Properties props = new Properties();
-		props.setProperty("Title", strGameName);
-		props.setProperty("Description", strGameDescription);
-		props.setProperty("Year", strGameYear);
+		if (null != strGameName)
+			props.setProperty("Title", strGameName);
+		if (null != strGameDescription)
+			props.setProperty("Description", strGameDescription);
+		if (null != strGameYear)
+			props.setProperty("Year", strGameYear);
+		if (null != strGameCRC)
+			props.setProperty("CRC", strGameCRC);
 		return props;
 	}
-	public VektorGuiRomItem(Properties props){
-		strGameName=props.getProperty("Title");
-		strGameDescription=props.getProperty("Description");
-		strGameYear=props.getProperty("Year");
+
+	public VektorGuiRomItem(Properties props) {
+		strGameName = props.getProperty("Title");
+		strGameDescription = props.getProperty("Description");
+		strGameYear = props.getProperty("Year");
+		strGameCRC = props.getProperty("CRC");
 	}
-	public void fromProperties(Properties props){
-		strGameName=props.getProperty("Title");
-		strGameDescription=props.getProperty("Description");
-		strGameYear=props.getProperty("Year");
-		//Log.i("VektorGuiRomItem::fromProperties()","Title="+strGameName+" Description="+strGameDescription+" Year="+strGameYear);
+
+	public void fromProperties(Properties props) {
+		strGameName = props.getProperty("Title");
+		strGameDescription = props.getProperty("Description");
+		strGameYear = props.getProperty("Year");
+		strGameCRC = props.getProperty("CRC");
 	}
 }

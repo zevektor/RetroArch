@@ -29,10 +29,11 @@ public class VektorGuiBroadcastReceiver<item> extends BroadcastReceiver {
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		if (intent.getAction().equals(DownloadManager.ACTION_DOWNLOAD_COMPLETE)) {
-			final long dlId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID,
-					0);
+			final long dlId = intent.getLongExtra(
+					DownloadManager.EXTRA_DOWNLOAD_ID, 0);
 			if (activeDls.containsKey(dlId)) {
-				Log.i("VektorGuiBroadcastReceiver::onReceive()",dlId+" - "+activeDls.get(dlId).getGameName());
+				Log.i("VektorGuiBroadcastReceiver::onReceive()", dlId + " - "
+						+ activeDls.get(dlId).getGameName());
 				Query q = new Query().setFilterById(dlId);
 				Cursor c = mManager.query(q);
 				if (c.moveToFirst()) {
@@ -43,17 +44,19 @@ public class VektorGuiBroadcastReceiver<item> extends BroadcastReceiver {
 								.getString(c
 										.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI));
 						final Uri fileUri = Uri.parse(uriString);
-						rootActivity.runOnUiThread(new Runnable(){
+						rootActivity.runOnUiThread(new Runnable() {
 							@Override
 							public void run() {
 								// TODO Auto-generated method stub
-								rootActivity.addDecodingJob(fileUri,activeDls.get(dlId));
+								rootActivity.addDecodingJob(fileUri,
+										activeDls.get(dlId));
 							}
-							
+
 						});
 						activeDls.remove(dlId);
 					}
 				}
+				c.close();
 			}
 		}
 	}
