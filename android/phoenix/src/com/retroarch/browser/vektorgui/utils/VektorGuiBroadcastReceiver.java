@@ -48,8 +48,7 @@ public class VektorGuiBroadcastReceiver<item> extends BroadcastReceiver {
 							@Override
 							public void run() {
 								// TODO Auto-generated method stub
-								rootActivity.addDecodingJob(fileUri,
-										activeDls.get(dlId));
+								//rootActivity.addDecodingJob(fileUri,activeDls.get(dlId));
 							}
 
 						});

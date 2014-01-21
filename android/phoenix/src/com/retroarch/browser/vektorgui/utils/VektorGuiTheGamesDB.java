@@ -124,9 +124,9 @@ public class VektorGuiTheGamesDB {
 
 		int rate = (rom.length == db.length ? 1 : 0) + (match * 100)
 				/ Math.max(rom.length, db.length);
-		Log.i("Match", "ROMNAME=" + romName + " DBNAME=" + dbName + " ->"
-				+ rate + "%. Time elapsed:"
-				+ (System.currentTimeMillis() - start) + " ms.");
+		// Log.i("Match", "ROMNAME=" + romName + " DBNAME=" + dbName + " ->"
+		// + rate + "%. Time elapsed:"
+		// + (System.currentTimeMillis() - start) + " ms.");
 		return rate;
 
 	}
@@ -146,7 +146,7 @@ public class VektorGuiTheGamesDB {
 				+ URLEncoder.encode(item.getGameName());
 		if (null != this.platform && !this.platform.equalsIgnoreCase("other")) {
 			url += "&platform=" + URLEncoder.encode(getPlatform());
-			Log.i("GetCoverLink()", url);
+			// Log.i("GetCoverLink()", url);
 			TheGamesDBClient.get(url, null, resHandlerDir);
 		}
 	}

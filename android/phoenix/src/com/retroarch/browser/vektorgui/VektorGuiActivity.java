@@ -144,6 +144,7 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
+		VektorGuiActivity.theActivity = this;
 		super.onCreate(savedInstanceState);
 		this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
 				WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -173,7 +174,11 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 
 	@Override
 	protected void onStop() {
-		unregisterReceiver(receiver);
+		try {
+			unregisterReceiver(receiver);
+		} catch (IllegalArgumentException ile) {
+
+		}
 		super.onStop();
 	}
 
@@ -229,6 +234,13 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 				this.platformPath);
 		initRoms();
 		initMetaData();
+		if (roms.size() > 0) {
+			File resStor = new File(romFolder, "Resources");
+			File coverStor = new File(resStor, roms.get(0).getROMPath()
+					.getName()
+					+ "-CV.jpg");
+			addDecodingJob(Uri.fromFile(coverStor), roms.get(0));
+		}
 		creatingUI = false;
 
 	}
@@ -247,7 +259,7 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 			@Override
 			protected void onPostExecute(Void result) {
 				for (final VektorGuiRomItem item : roms) {
-					updateUI(item, romListAdapter.getSelectedItem());
+					// updateUI(item, romListAdapter.getSelectedItem());
 				}
 			}
 		}.execute();
@@ -533,127 +545,11 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 			}
 			File coverStor = new File(resStor, item.getROMPath().getName()
 					+ "-CV.jpg");
-			if (coverStor.exists()) {
-				try {
-					item.setGameCover(new BitmapDrawable(getResources(),
-							BitmapFactory.decodeStream(new FileInputStream(
-									coverStor))));
-				} catch (FileNotFoundException e) {
-					// e.printStackTrace();
-				}
-
-			} else {
-				item.setGameCover(getResources().getDrawable(
-						R.drawable.vektor_nocover));
+			if (!coverStor.exists()) {
+				// item.setGameCover(getResources().getDrawable(
+				// R.drawable.vektor_nocover));
 				mDownloadThreadPool.execute(new VektorGuiROMTask(this, resStor,
 						item, mManager));
-			}
-		}
-	}
-
-	private void loadaAssociatedMetadata(VektorGuiRomItem item) {
-		File resStor = new File(romFolder, "Resources");
-		// Log.d("VektorGuiActivity::loadAssociatedMetaData()",
-		// item.getGameName()
-		// + " - " + item.getRomPath());
-		if (platformPath.equalsIgnoreCase("PSX")) {
-			String id = item.getGameCRC();
-			String title = myDbHelper.getGameTitle(id);
-			if (resStor.exists()) {
-				try {
-					File fExtRes = new File(resStor, (item.getGameName()
-							.contains("[") ? item.getGameName().substring(0,
-							item.getGameName().indexOf("["))
-							: item.getGameName())
-							+ "-CV.jpg");
-					Properties props = new Properties();
-					try {
-						props.load(new FileReader(new File(resStor, item
-								.getGameName() + ".prop")));
-						item.fromProperties(props);
-					} catch (FileNotFoundException e) {
-						// e.printStackTrace();
-					} catch (IOException e) {
-						// e.printStackTrace();
-					}
-					if (fExtRes.exists()) {
-						item.setGameCover(new BitmapDrawable(this
-								.getResources(), BitmapFactory
-								.decodeStream(new FileInputStream(fExtRes))));
-					} else {
-						item.setGameCover(this.getResources().getDrawable(
-								R.drawable.vektor_nocover));
-						/*
-						 * this.mDownloadThreadPool .execute(new
-						 * VektorGuiROMTask( resStor, this, (title.contains("[")
-						 * ? title.substring( 0, title.indexOf("[")) : title),
-						 * platformPath, item, mManager));
-						 */
-					}
-				} catch (Exception e) {
-				}
-			}
-
-		} else {
-			try {
-
-				ROMInfo.ROMInfoNode rinCData = ridROMInfoDat.getNode(item
-						.getGameCRC());
-				if (platformPath.equals("GBC") && rinCData == null) {
-					ridROMInfoDat = new ROMInfo(this.getResources().getXml(
-							R.xml.rominfo_gb));
-					rinCData = ridROMInfoDat.getNode(item.getGameCRC());
-				}
-				if (rinCData != null) {
-
-					String romName = rinCData.getROMData().getROMName();
-
-					if (rinCData.getNumReleases() == 0) {
-						if (romName.indexOf('(') != -1) {
-
-							item.setGameName(romName.substring(0,
-									romName.indexOf('(') - 1));
-						} else {
-							item.setGameName(romName.substring(0,
-									romName.lastIndexOf(".")));
-						}
-					} else {
-						item.setGameName(rinCData.getReleaseData(0)
-								.getReleaseName());
-					}
-				}
-
-				// File resStor = new File(romFolder, "Resources");
-				if (resStor.exists()) {
-					Properties props = new Properties();
-					try {
-						props.load(new FileReader(new File(resStor, item
-								.getGameName() + ".prop")));
-						item.fromProperties(props);
-					} catch (FileNotFoundException e) {
-						// e.printStackTrace();
-					} catch (IOException e) {
-						// e.printStackTrace();
-					}
-					File fExtRes = new File(resStor, item.getGameName()
-							+ "-CV.jpg");
-					if (fExtRes.exists()) {
-						item.setGameCover(new BitmapDrawable(this
-								.getResources(), BitmapFactory
-								.decodeStream(new FileInputStream(fExtRes))));
-					} else {
-						item.setGameCover(this.getResources().getDrawable(
-								R.drawable.vektor_nocover));
-						/*
-						 * this.mDownloadThreadPool.execute(new
-						 * VektorGuiROMTask( resStor, this, item.getGameName(),
-						 * platformPath, item, mManager));
-						 */
-					}
-				}
-			} catch (Exception e) {
-				// TODO Handle errors when loading associated ROM metadata
-				e.printStackTrace();
 			}
 		}
 	}
@@ -663,19 +559,44 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 
 			@Override
 			public void run() {
+				// Log.i("addDecodingJob()", new
+				// File(fileUri.getPath()).getName());
 				android.os.Process
-						.setThreadPriority(android.os.Process.THREAD_PRIORITY_DEFAULT);
-				try {
-					BitmapDrawable bd = new BitmapDrawable(getResources(),
-							BitmapFactory.decodeStream(new FileInputStream(
-									fileUri.getPath())));
-					item.setGameCover(bd);
-					updateGameCover(item.getGameName());
-				} catch (FileNotFoundException e) {
-					e.printStackTrace();
+						.setThreadPriority(android.os.Process.THREAD_PRIORITY_DISPLAY);
+				BitmapFactory.Options opts = new BitmapFactory.Options();
+				opts.inJustDecodeBounds = true;
+				BitmapFactory.decodeFile(fileUri.getPath(), opts);
+				int w = opts.outWidth;
+				int h = opts.outHeight;
+				opts.inSampleSize = Math.max(w, h) / 168;
+				opts.inJustDecodeBounds = false;
+				final BitmapDrawable bd = new BitmapDrawable(getResources(),
+						BitmapFactory.decodeFile(fileUri.getPath(), opts));
+				item.setGameCover(bd);
+				// updateGameCover(item.getGameName());
+				Log.i("addDecodingJob()",
+						(romListAdapter.getSelectedItem() > -1 ? ""
+								+ romListAdapter.getSelectedItem()
+								+ " "
+								+ romListAdapter.getItem(
+										romListAdapter.getSelectedItem())
+										.getGameName() : "-1"));
+				if (romListAdapter.getSelectedItem() > -1
+						&& romListAdapter
+								.getItem(romListAdapter.getSelectedItem())
+								.getGameName()
+								.equalsIgnoreCase(item.getGameName())) {
+					runOnUiThread(new Runnable() {
+
+						@Override
+						public void run() {
+							// TODO Auto-generated method stub
+							gamecover.setImageDrawable(bd);
+						}
+
+					});
 				}
 			}
-
 		});
 	}
 
@@ -747,7 +668,15 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 
 	@Override
 	public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
-		updateUI(romListAdapter.getItem(arg2), arg2);
+		VektorGuiRomItem item = romListAdapter.getItem(arg2);
+		updateUI(item, arg2);
+		File resStor = new File(romFolder, "Resources");
+		File coverStor = new File(resStor, item.getROMPath().getName()
+				+ "-CV.jpg");
+		Log.i("onItemClick",
+				coverStor.exists() + " " + (null == item.getGameCover()));
+		if (coverStor.exists() && item.getGameCover() == null)
+			addDecodingJob(Uri.fromFile(coverStor), item);
 	}
 
 	private void updateUI(VektorGuiRomItem item, int position) {
@@ -815,20 +744,32 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 		if (event.getAction() == KeyEvent.ACTION_DOWN && null != romList
 				&& null != romList.getSelectedView()
 				&& romListAdapter.getCount() > 1) {
+			int position = romListAdapter.getSelectedItem();
 			switch (keyCode) {
 			case KeyEvent.KEYCODE_DPAD_DOWN:
-				if (romListAdapter.getSelectedItem() < romListAdapter
-						.getCount() - 1) {
-					updateUI(romListAdapter.getItem(romListAdapter
-							.getSelectedItem() + 1),
-							romListAdapter.getSelectedItem() + 1);
+				if (position < romListAdapter.getCount() - 1) {
+					updateUI(romListAdapter.getItem(position + 1), position + 1);
+					File resStor = new File(romFolder, "Resources");
+					File coverStor = new File(resStor, romListAdapter
+							.getItem(position + 1).getROMPath().getName()
+							+ "-CV.jpg");
+					if (coverStor.exists()) {
+						addDecodingJob(Uri.fromFile(coverStor),
+								romListAdapter.getItem(position + 1));
+					}
 				}
 				break;
 			case KeyEvent.KEYCODE_DPAD_UP:
-				if (romListAdapter.getSelectedItem() > 0) {
-					updateUI(romListAdapter.getItem(romListAdapter
-							.getSelectedItem() - 1),
-							romListAdapter.getSelectedItem() - 1);
+				if (position > 0) {
+					updateUI(romListAdapter.getItem(position - 1), position - 1);
+					File resStor = new File(romFolder, "Resources");
+					File coverStor = new File(resStor, romListAdapter
+							.getItem(position - 1).getROMPath().getName()
+							+ "-CV.jpg");
+					if (coverStor.exists()) {
+						addDecodingJob(Uri.fromFile(coverStor),
+								romListAdapter.getItem(position - 1));
+					}
 				}
 				break;
 			case KeyEvent.KEYCODE_ENTER:
