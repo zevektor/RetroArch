@@ -21,6 +21,7 @@ import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
 import com.retroarch.browser.vektorgui.VektorGuiActivity;
+import com.retroarch.browser.vektorgui.VektorGuiPlatformHelper;
 import com.retroarch.browser.vektorgui.ui.VektorGuiRomItem;
 import com.retroarch.browser.vektorgui.utils.Serialization.gameClass;
 
@@ -187,8 +188,8 @@ public class VektorGuiTheGamesDB {
 									.store(new FileWriter(props), "");
 						} catch (IOException e) {
 						}
-						File cover = new File(romRoot, item.getROMPath()
-								.getName() + "-CV.jpg");
+						File cover = new File(romRoot, VektorGuiPlatformHelper.cleanName(item.getROMPath()
+								.getName()) + "-CV.jpg");
 						Request req = new Request(Uri.parse(coverURL))
 								.setTitle(item.getGameName())
 								.setDescription(getPlatform())

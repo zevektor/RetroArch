@@ -115,8 +115,6 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 	private File romFolder;
 	private VektorGuiDatabaseHelper myDbHelper;
 	private DownloadManager mManager;
-	// private HashMap<String, VektorGuiBroadcastReceiver> receivers = new
-	// HashMap<String, VektorGuiBroadcastReceiver>();
 	private String platform;
 
 	private void defineUI() {
@@ -205,6 +203,14 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 			String platform, List<String> supported_extensions, boolean init) {
 		if (!init)
 			return;
+		if (mDownloadWorkQueue.size() > 0) {
+			mDownloadWorkQueue.drainTo(new ArrayList<Runnable>());
+			mDownloadThreadPool.shutdownNow();
+		}
+		if (mDecodeWorkQueue.size() > 0) {
+			mDecodeWorkQueue.drainTo(new ArrayList<Runnable>());
+			mDecodeThreadPool.shutdownNow();
+		}
 		creatingUI = true;
 		if (null == core_path || null == core_name || null == platform)
 			return;
@@ -236,9 +242,10 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 		initMetaData();
 		if (roms.size() > 0) {
 			File resStor = new File(romFolder, "Resources");
-			File coverStor = new File(resStor, roms.get(0).getROMPath()
-					.getName()
-					+ "-CV.jpg");
+			File coverStor = new File(resStor,
+					VektorGuiPlatformHelper.cleanName(roms.get(0).getROMPath()
+							.getName())
+							+ "-CV.jpg");
 			addDecodingJob(Uri.fromFile(coverStor), roms.get(0));
 		}
 		creatingUI = false;
@@ -250,16 +257,16 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 		new AsyncTask<Void, Void, Void>() {
 			@Override
 			protected Void doInBackground(Void... params) {
-				for (final VektorGuiRomItem item : roms) {
-					loadAssociatedMetadata(item);
+				for (int i=0;i<roms.size(); i++) {
+					loadAssociatedMetadata(roms.get(i));
 				}
 				return null;
 			}
 
 			@Override
 			protected void onPostExecute(Void result) {
-				for (final VektorGuiRomItem item : roms) {
-					// updateUI(item, romListAdapter.getSelectedItem());
+				for (int i=0;i<roms.size();i++) {
+					// updateUI(roms.get(i), romListAdapter.getSelectedItem());
 				}
 			}
 		}.execute();
@@ -333,6 +340,14 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 			romList.setSelection(0);
 			// Log.d("VektorGuiActivity::initRoms()","Setting cursor at first element of list.");
 			updateUI(romListAdapter.getItem(0), 0);
+			addDecodingJob(
+					Uri.fromFile(romListAdapter.getItem(0).getROMPath()),
+					romListAdapter.getItem(0));
+			romListAdapter.selectRow(0);
+			numGames.setText(getResources().getString(
+					R.string.vektor_gui_list_gamesfound).replace("[%d]",
+					Integer.toString(roms.size())));
+			numGames.setVisibility(View.VISIBLE);
 		} else {
 			gameyear.setText("19XX");
 			gametitle.setText("Game Title");
@@ -341,11 +356,6 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 			gamecover.setImageDrawable(getResources().getDrawable(
 					R.drawable.vektor_nocover));
 		}
-		romListAdapter.selectRow(0);
-		numGames.setText(getResources().getString(
-				R.string.vektor_gui_list_gamesfound).replace("[%d]",
-				Integer.toString(roms.size())));
-		numGames.setVisibility(View.VISIBLE);
 	}
 
 	private boolean extensionCheck(String name) {
@@ -543,8 +553,9 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 												.lastIndexOf(".")));
 				}
 			}
-			File coverStor = new File(resStor, item.getROMPath().getName()
-					+ "-CV.jpg");
+			File coverStor = new File(resStor,
+					VektorGuiPlatformHelper.cleanName(item.getROMPath()
+							.getName()) + "-CV.jpg");
 			if (!coverStor.exists()) {
 				// item.setGameCover(getResources().getDrawable(
 				// R.drawable.vektor_nocover));
@@ -602,9 +613,10 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 
 	public void updateGameCover(final String gameName) {
 		File resStor = new File(romFolder, "Resources");
-		File fExtRes = new File(resStor,
-				(gameName.contains("[") ? gameName.substring(0,
-						gameName.indexOf("[")) : gameName)
+		File fExtRes = new File(
+				resStor,
+				VektorGuiPlatformHelper.cleanName((gameName.contains("[") ? gameName
+						.substring(0, gameName.indexOf("[")) : gameName))
 						+ "-CV.jpg");
 		if (fExtRes.exists()) {
 
@@ -655,12 +667,17 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 
 		@SuppressWarnings("rawtypes")
 		public void run() {
-			android.os.Process
-					.setThreadPriority(android.os.Process.THREAD_PRIORITY_DEFAULT);
-			Log.i("ROMTask", "Game: " + item.getGameName());
-			VektorGuiTheGamesDB tgdb = new VektorGuiTheGamesDB(resStor,
-					activity, platformPath, item, mManager);
-			tgdb.DownloadFromUrl();
+			try {
+				Thread.sleep(0);
+				android.os.Process
+						.setThreadPriority(android.os.Process.THREAD_PRIORITY_DEFAULT);
+				Log.i("ROMTask", "Game: " + item.getGameName());
+				VektorGuiTheGamesDB tgdb = new VektorGuiTheGamesDB(resStor,
+						activity, platformPath, item, mManager);
+				tgdb.DownloadFromUrl();
+			} catch (InterruptedException ie) {
+				return;
+			}
 			return;
 		}
 
@@ -671,8 +688,9 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 		VektorGuiRomItem item = romListAdapter.getItem(arg2);
 		updateUI(item, arg2);
 		File resStor = new File(romFolder, "Resources");
-		File coverStor = new File(resStor, item.getROMPath().getName()
-				+ "-CV.jpg");
+		File coverStor = new File(resStor,
+				VektorGuiPlatformHelper.cleanName(item.getROMPath().getName())
+						+ "-CV.jpg");
 		Log.i("onItemClick",
 				coverStor.exists() + " " + (null == item.getGameCover()));
 		if (coverStor.exists() && item.getGameCover() == null)
@@ -750,9 +768,11 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 				if (position < romListAdapter.getCount() - 1) {
 					updateUI(romListAdapter.getItem(position + 1), position + 1);
 					File resStor = new File(romFolder, "Resources");
-					File coverStor = new File(resStor, romListAdapter
-							.getItem(position + 1).getROMPath().getName()
-							+ "-CV.jpg");
+					File coverStor = new File(resStor,
+							VektorGuiPlatformHelper.cleanName(romListAdapter
+									.getItem(position + 1).getROMPath()
+									.getName())
+									+ "-CV.jpg");
 					if (coverStor.exists()) {
 						addDecodingJob(Uri.fromFile(coverStor),
 								romListAdapter.getItem(position + 1));
@@ -763,9 +783,11 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 				if (position > 0) {
 					updateUI(romListAdapter.getItem(position - 1), position - 1);
 					File resStor = new File(romFolder, "Resources");
-					File coverStor = new File(resStor, romListAdapter
-							.getItem(position - 1).getROMPath().getName()
-							+ "-CV.jpg");
+					File coverStor = new File(resStor,
+							VektorGuiPlatformHelper.cleanName(romListAdapter
+									.getItem(position - 1).getROMPath()
+									.getName())
+									+ "-CV.jpg");
 					if (coverStor.exists()) {
 						addDecodingJob(Uri.fromFile(coverStor),
 								romListAdapter.getItem(position - 1));
