@@ -510,7 +510,7 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 		File resStor = new File(romFolder, "Resources");
 		resStor.mkdirs();
 		if (resStor.exists()) {
-			File propStor = new File(resStor, item.getROMPath().getName()
+			File propStor = new File(resStor, VektorGuiPlatformHelper.cleanName(item.getROMPath().getName())
 					+ ".prop");
 			if (propStor.exists()) {
 				try {
@@ -562,7 +562,7 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 										item.getROMPath().getName()
 												.lastIndexOf(".")));
 				} else if (platformPath.equalsIgnoreCase("MAME")) {
-					item.setGameName(VektorGuiPlatformHelper.cleanName(item
+					if(null!=item.getGameName()) item.setGameName(VektorGuiPlatformHelper.cleanName(item
 							.getROMPath().getName()));
 				}
 			}
