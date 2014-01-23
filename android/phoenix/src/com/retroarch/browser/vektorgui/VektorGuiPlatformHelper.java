@@ -11,12 +11,14 @@ import com.retroarch.browser.preferences.util.UserPreferences;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 
 public class VektorGuiPlatformHelper {
 	public static String[] getPlatformList() {
 		String[] pList = { "Nintendo Entertainment System",
 				"Super Nintendo Entertainment System", "Game Boy",
-				"Game Boy Color", "Game Boy Advance", "Nintendo 64",
+				"Game Boy Color", "Game Boy Advance","MAME", "Nintendo 64",
 				"Nintendo DS", "PlayStation", "Sega Genesis",
 				"Sega Master System", "Sega Game Gear", "TurboGrafx-16" };
 		return pList;
@@ -47,7 +49,10 @@ public class VektorGuiPlatformHelper {
 			return ctx.getResources().getDrawable(R.drawable.platform_pce);
 		else if ("Nintendo DS".equals(name))
 			return ctx.getResources().getDrawable(R.drawable.platform_nds);
-		return null;
+		else if ("MAME".equals(name))
+			return ctx.getResources().getDrawable(R.drawable.platform_mame);
+		else
+			return null;
 	}
 
 	public static List<ModuleWrapper> getCoreList(Context ctx) {
@@ -106,5 +111,15 @@ public class VektorGuiPlatformHelper {
 			return str.substring(0, str.lastIndexOf("."));
 		} else
 			return str;
+	}
+	
+	public static boolean isOnline(Context ctx) {
+		ConnectivityManager cm = (ConnectivityManager) ctx
+				.getSystemService(Context.CONNECTIVITY_SERVICE);
+		NetworkInfo netInfo = cm.getActiveNetworkInfo();
+		if (netInfo != null && netInfo.isConnected()) {
+			return true;
+		}
+		return false;
 	}
 }

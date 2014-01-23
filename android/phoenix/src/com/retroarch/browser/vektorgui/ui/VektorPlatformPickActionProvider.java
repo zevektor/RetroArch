@@ -144,6 +144,9 @@ public class VektorPlatformPickActionProvider extends ActionProvider implements
 			adapter.add("FCEUmm");
 			adapter.add("Nestopia");
 			adapter.add("QuickNES");
+		} else if("MAME".equals(platform)){
+			adapter.add("MAME 2003 (0.78)");
+			adapter.add("MAME 2010 (0.139)");
 		}
 		else
 			for (int i = 0; i < cores.size(); i++) {

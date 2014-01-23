@@ -93,15 +93,6 @@ public class VektorGuiTheGamesDB {
 			return "Other";
 	}
 
-	private boolean isOnline() {
-		ConnectivityManager cm = (ConnectivityManager) callerActivity
-				.getSystemService(Context.CONNECTIVITY_SERVICE);
-		NetworkInfo netInfo = cm.getActiveNetworkInfo();
-		if (netInfo != null && netInfo.isConnected()) {
-			return true;
-		}
-		return false;
-	}
 
 	private int stringMatch(String romName, String dbName) {
 		long start = System.currentTimeMillis();
@@ -133,10 +124,11 @@ public class VektorGuiTheGamesDB {
 	}
 
 	public boolean DownloadFromUrl() {
-		if (this.isOnline()) {
+		boolean isOnline = VektorGuiPlatformHelper.isOnline(callerActivity);
+		if (isOnline) {
 			getCoverLink();
 		}
-		return this.isOnline();
+		return isOnline;
 	}
 
 	private String coverURL = null;
@@ -177,17 +169,17 @@ public class VektorGuiTheGamesDB {
 					item.setGameDescription(games.get(bestMatch)
 							.getDescription());
 					item.setGameYear(games.get(bestMatch).getYear());
+					try {
+						File props = new File(romRoot, VektorGuiPlatformHelper.cleanName(item.getROMPath()
+								.getName()) + ".prop");
+						item.toProperties()
+								.store(new FileWriter(props), "");
+					} catch (IOException e) {
+					}
 					if (coverURL != null) {
 						coverURL = coverURL.replace("http://", "");
 						coverURL = ("http://" + Uri.encode(coverURL)).replace(
 								"%2F", "/");
-						try {
-							File props = new File(romRoot, item.getROMPath()
-									.getName() + ".prop");
-							item.toProperties()
-									.store(new FileWriter(props), "");
-						} catch (IOException e) {
-						}
 						File cover = new File(romRoot, VektorGuiPlatformHelper.cleanName(item.getROMPath()
 								.getName()) + "-CV.jpg");
 						Request req = new Request(Uri.parse(coverURL))

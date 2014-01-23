@@ -257,7 +257,7 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 		new AsyncTask<Void, Void, Void>() {
 			@Override
 			protected Void doInBackground(Void... params) {
-				for (int i=0;i<roms.size(); i++) {
+				for (int i = 0; i < roms.size(); i++) {
 					loadAssociatedMetadata(roms.get(i));
 				}
 				return null;
@@ -265,15 +265,16 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 
 			@Override
 			protected void onPostExecute(Void result) {
-				for (int i=0;i<roms.size();i++) {
-					// updateUI(roms.get(i), romListAdapter.getSelectedItem());
-				}
+				// for (int i = 0; i < roms.size(); i++) {
+				updateUI(roms.get(romListAdapter.getSelectedItem()), romListAdapter.getSelectedItem());
+				// }
 			}
 		}.execute();
 	}
 
 	private void initRoms() {
-		if (!platformPath.equalsIgnoreCase("PSX"))
+		if (!platformPath.equalsIgnoreCase("PSX")
+				&& !platformPath.equalsIgnoreCase("MAME"))
 			ridROMInfoDat = new ROMInfo(this.getResources().getXml(xmlId));
 		SharedPreferences prefs = UserPreferences.getPreferences(this);
 		if (null != prefs.getString("rgui_browser_directory", null)) {
@@ -299,7 +300,8 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 			for (File f : romFileList) {
 				if (!f.getName().startsWith(".")
 						&& f.getName().toLowerCase().endsWith(".zip")
-						&& !platformPath.equalsIgnoreCase("PSX")) {
+						&& !platformPath.equalsIgnoreCase("PSX")
+						&& !platformPath.equalsIgnoreCase("MAME")) {
 					ZipFile zf;
 					try {
 						zf = new ZipFile(f, ZipFile.OPEN_READ);
@@ -318,8 +320,13 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 						zf.close();
 					} catch (IOException e) {
 					}
-				} else if (extensionCheck(f.getName())
+				} else if (!f.getName().startsWith(".")
+						&& extensionCheck(f.getName())
 						&& !platformPath.equalsIgnoreCase("PSX")) {
+					roms.add(new VektorGuiRomItem(f, null));
+				} else if (!f.getName().startsWith(".")
+						&& extensionCheck(f.getName())
+						&& platformPath.equalsIgnoreCase("MAME")) {
 					roms.add(new VektorGuiRomItem(f, null));
 				} else if (!f.getName().startsWith(".")
 						&& !f.getName().contains("SCPH") // Skip bios .bin file
@@ -400,6 +407,8 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 			return "GG";
 		else if (platform.equals("PlayStation"))
 			return "PSX";
+		else if (platform.equals("MAME"))
+			return "MAME";
 		else
 			return "Other";
 	}
@@ -514,7 +523,8 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 					// e.printStackTrace();
 				}
 			} else {
-				if (!platformPath.equalsIgnoreCase("PSX")) {
+				if (!platformPath.equalsIgnoreCase("PSX")
+						&& !platformPath.equalsIgnoreCase("MAME")) {
 					item.setGameCRC(calculateCRC32(item.getROMPath()));
 					ROMInfo.ROMInfoNode rNode = ridROMInfoDat.getNode(item
 							.getGameCRC());
@@ -535,7 +545,7 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 					} else
 						item.setGameName(item.getGameName().substring(0,
 								item.getGameName().lastIndexOf(".")));
-				} else {
+				} else if (platformPath.equalsIgnoreCase("PSX")) {
 					// PS1 Games
 					item.setGameCRC(getPSXId(item.getROMPath()));
 					String title = myDbHelper.getGameTitle(item.getGameCRC());
@@ -551,6 +561,9 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 										0,
 										item.getROMPath().getName()
 												.lastIndexOf(".")));
+				} else if (platformPath.equalsIgnoreCase("MAME")) {
+					item.setGameName(VektorGuiPlatformHelper.cleanName(item
+							.getROMPath().getName()));
 				}
 			}
 			File coverStor = new File(resStor,
@@ -672,9 +685,15 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 				android.os.Process
 						.setThreadPriority(android.os.Process.THREAD_PRIORITY_DEFAULT);
 				Log.i("ROMTask", "Game: " + item.getGameName());
-				VektorGuiTheGamesDB tgdb = new VektorGuiTheGamesDB(resStor,
-						activity, platformPath, item, mManager);
-				tgdb.DownloadFromUrl();
+				if (!platformPath.equalsIgnoreCase("MAME")) {
+					VektorGuiTheGamesDB tgdb = new VektorGuiTheGamesDB(resStor,
+							activity, platformPath, item, mManager);
+					tgdb.DownloadFromUrl();
+				} else if ("MAME".equalsIgnoreCase(platformPath)) {
+					VektorGuiArcadeHits vgah = new VektorGuiArcadeHits(resStor,
+							activity, platformPath, item, mManager);
+					vgah.DownloadFromUrl();
+				}
 			} catch (InterruptedException ie) {
 				return;
 			}
