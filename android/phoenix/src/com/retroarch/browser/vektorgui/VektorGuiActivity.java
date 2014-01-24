@@ -266,7 +266,9 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 			@Override
 			protected void onPostExecute(Void result) {
 				// for (int i = 0; i < roms.size(); i++) {
-				updateUI(roms.get(romListAdapter.getSelectedItem()), romListAdapter.getSelectedItem());
+				if (roms.size() > 0)
+					updateUI(roms.get(romListAdapter.getSelectedItem()),
+							romListAdapter.getSelectedItem());
 				// }
 			}
 		}.execute();
@@ -339,6 +341,7 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 		}
 		// Once it's done, we populate the list.
 		romList = (ListView) findViewById(R.id.vektor_gui_game_list);
+		romList.setSoundEffectsEnabled(false);
 		romList.setAdapter(romListAdapter);
 		romListAdapter.notifyDataSetChanged();
 		romList.setOnItemClickListener(this);
@@ -510,8 +513,9 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 		File resStor = new File(romFolder, "Resources");
 		resStor.mkdirs();
 		if (resStor.exists()) {
-			File propStor = new File(resStor, VektorGuiPlatformHelper.cleanName(item.getROMPath().getName())
-					+ ".prop");
+			File propStor = new File(resStor,
+					VektorGuiPlatformHelper.cleanName(item.getROMPath()
+							.getName()) + ".prop");
 			if (propStor.exists()) {
 				try {
 					Properties props = new Properties();
@@ -562,16 +566,15 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 										item.getROMPath().getName()
 												.lastIndexOf(".")));
 				} else if (platformPath.equalsIgnoreCase("MAME")) {
-					if(null!=item.getGameName()) item.setGameName(VektorGuiPlatformHelper.cleanName(item
-							.getROMPath().getName()));
+					if (null != item.getGameName())
+						item.setGameName(VektorGuiPlatformHelper.cleanName(item
+								.getROMPath().getName()));
 				}
 			}
 			File coverStor = new File(resStor,
 					VektorGuiPlatformHelper.cleanName(item.getROMPath()
 							.getName()) + "-CV.jpg");
 			if (!coverStor.exists()) {
-				// item.setGameCover(getResources().getDrawable(
-				// R.drawable.vektor_nocover));
 				mDownloadThreadPool.execute(new VektorGuiROMTask(this, resStor,
 						item, mManager));
 			}
@@ -786,6 +789,7 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 			case KeyEvent.KEYCODE_DPAD_DOWN:
 				if (position < romListAdapter.getCount() - 1) {
 					updateUI(romListAdapter.getItem(position + 1), position + 1);
+					romList.setSelection(position + 1);
 					File resStor = new File(romFolder, "Resources");
 					File coverStor = new File(resStor,
 							VektorGuiPlatformHelper.cleanName(romListAdapter
@@ -801,6 +805,7 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 			case KeyEvent.KEYCODE_DPAD_UP:
 				if (position > 0) {
 					updateUI(romListAdapter.getItem(position - 1), position - 1);
+					romList.setSelection(position - 1);
 					File resStor = new File(romFolder, "Resources");
 					File coverStor = new File(resStor,
 							VektorGuiPlatformHelper.cleanName(romListAdapter
@@ -814,6 +819,7 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 				}
 				break;
 			case KeyEvent.KEYCODE_ENTER:
+			case KeyEvent.KEYCODE_BUTTON_START:
 				if (romListAdapter.getSelectedItem() > -1)
 					this.romExecute(romListAdapter.getItem(
 							romListAdapter.getSelectedItem()).getRomPath());
@@ -837,6 +843,7 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		Log.i("KeyDown", "KC=" + KeyEvent.keyCodeToString(keyCode));
 		if (keyCode == KeyEvent.KEYCODE_VOLUME_UP
 				|| keyCode == KeyEvent.KEYCODE_VOLUME_DOWN
 				|| keyCode == KeyEvent.KEYCODE_VOLUME_MUTE)

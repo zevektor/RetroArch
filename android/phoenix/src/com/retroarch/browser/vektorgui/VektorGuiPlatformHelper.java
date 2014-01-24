@@ -98,7 +98,7 @@ public class VektorGuiPlatformHelper {
 	public static ModuleWrapper findCore(List<ModuleWrapper> cores,
 			String strName) {
 		for (ModuleWrapper core : cores) {
-			if (strName.equals(core.getText()))
+			if (null != core && strName.equals(core.getText()))
 				return core;
 		}
 		return null;
