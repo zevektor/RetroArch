@@ -1,4 +1,4 @@
-package com.retroarch.browser.vektorgui;
+package com.retroarch.browser.vektorgui.utils;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -15,6 +15,8 @@ import android.net.Uri;
 import android.util.Log;
 
 import com.retroarch.R;
+import com.retroarch.browser.vektorgui.VektorGuiActivity;
+import com.retroarch.browser.vektorgui.VektorGuiPlatformHelper;
 import com.retroarch.browser.vektorgui.ui.VektorGuiRomItem;
 
 public class VektorGuiArcadeHits {

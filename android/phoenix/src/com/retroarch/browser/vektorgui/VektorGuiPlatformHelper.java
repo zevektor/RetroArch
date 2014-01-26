@@ -18,7 +18,7 @@ public class VektorGuiPlatformHelper {
 	public static String[] getPlatformList() {
 		String[] pList = { "Nintendo Entertainment System",
 				"Super Nintendo Entertainment System", "Game Boy",
-				"Game Boy Color", "Game Boy Advance","MAME", "Nintendo 64",
+				"Game Boy Color", "Game Boy Advance", "MAME", "Nintendo 64",
 				"Nintendo DS", "PlayStation", "Sega Genesis",
 				"Sega Master System", "Sega Game Gear", "TurboGrafx-16" };
 		return pList;
@@ -109,10 +109,14 @@ public class VektorGuiPlatformHelper {
 			return str;
 		} else if (str.lastIndexOf(".") != -1) {
 			return str.substring(0, str.lastIndexOf("."));
+		} else if (str.indexOf("(") != -1) {
+			return str.substring(0, str.indexOf("("));
+		} else if (str.indexOf("[")!=-1){
+			return str.substring(0, str.indexOf("["));
 		} else
 			return str;
 	}
-	
+
 	public static boolean isOnline(Context ctx) {
 		ConnectivityManager cm = (ConnectivityManager) ctx
 				.getSystemService(Context.CONNECTIVITY_SERVICE);
