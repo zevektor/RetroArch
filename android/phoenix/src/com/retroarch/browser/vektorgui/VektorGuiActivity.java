@@ -149,9 +149,11 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 		String core = prefs.getString("libretro_path", null);
 		String name = prefs.getString("libretro_name", null);
 		String platform = prefs.getString("vektor_gui_last_platform", null);
-		setModuleAndPlatform(core, name, platform, VektorGuiPlatformHelper
-				.findCore(VektorGuiPlatformHelper.getCoreList(this), name)
-				.getSupportedExtensions(), true);
+		if (null != core && null != name && null != platform) {
+			setModuleAndPlatform(core, name, platform, VektorGuiPlatformHelper
+					.findCore(VektorGuiPlatformHelper.getCoreList(this), name)
+					.getSupportedExtensions(), true);
+		}
 		receiver = new VektorGuiBroadcastReceiver(mManager, this);
 		registerReceiver(receiver, new IntentFilter(
 				DownloadManager.ACTION_DOWNLOAD_COMPLETE));

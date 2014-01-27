@@ -13,6 +13,7 @@ import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.util.Log;
 
 public class VektorGuiPlatformHelper {
 	public static String[] getPlatformList() {
@@ -97,6 +98,7 @@ public class VektorGuiPlatformHelper {
 
 	public static ModuleWrapper findCore(List<ModuleWrapper> cores,
 			String strName) {
+		Log.i("findCore",(cores==null?"null":cores.size())+" STRNAME "+strName);
 		for (ModuleWrapper core : cores) {
 			if (null != core && strName.equals(core.getText()))
 				return core;
