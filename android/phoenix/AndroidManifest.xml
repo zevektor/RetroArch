@@ -80,9 +80,6 @@
             android:theme="@style/Theme.AppCompat"
             android:exported="true"
             android:launchMode="singleInstance">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.retroarch.browser.mainmenu.MainMenuActivity" />
         </activity>
     </application>
 

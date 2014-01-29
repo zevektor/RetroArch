@@ -1,23 +1,24 @@
-package com.retroarch.browser.vektorgui.ui;
+package com.retroarch.browser.vektorgui.ui.views;
 
 import android.content.Context;
 import android.graphics.Typeface;
 import android.util.AttributeSet;
+import android.widget.Button;
 import android.widget.TextView;
 
-public class VektorGuiTextView extends TextView {
+public class VektorGuiButton extends Button {
 
-    public VektorGuiTextView(Context context, AttributeSet attrs, int defStyle) {
+    public VektorGuiButton(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         init();
     }
 
-    public VektorGuiTextView(Context context, AttributeSet attrs) {
+    public VektorGuiButton(Context context, AttributeSet attrs) {
         super(context, attrs);
         init();
     }
 
-    public VektorGuiTextView(Context context) {
+    public VektorGuiButton(Context context) {
         super(context);
         init();
     }

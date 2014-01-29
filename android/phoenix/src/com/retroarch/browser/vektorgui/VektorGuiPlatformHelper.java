@@ -14,6 +14,7 @@ import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.util.Log;
+import android.widget.ArrayAdapter;
 
 public class VektorGuiPlatformHelper {
 	public static String[] getPlatformList() {
@@ -96,9 +97,8 @@ public class VektorGuiPlatformHelper {
 		return cores;
 	}
 
-	public static ModuleWrapper findCore(List<ModuleWrapper> cores,
-			String strName) {
-		Log.i("findCore",(cores==null?"null":cores.size())+" STRNAME "+strName);
+	public static ModuleWrapper findCore(String strName, Context ctx) {
+		List<ModuleWrapper> cores = getCoreList(ctx);
 		for (ModuleWrapper core : cores) {
 			if (null != core && strName.equals(core.getText()))
 				return core;
@@ -127,5 +127,32 @@ public class VektorGuiPlatformHelper {
 			return true;
 		}
 		return false;
+	}
+	
+	public static ArrayList<String> prepareAdapter(String platform,Context ctx) {
+		ArrayList<String> cores = new ArrayList<String>();
+		if ("Sega Genesis".equals(platform)) {
+			cores.add("Genesis Plus GX");
+			cores.add("Picodrive");
+		} else if ("Sega Game Gear".equals(platform)
+				|| "Sega Master System".equals(platform)) {
+			cores.add("Genesis Plus GX");
+		} else if ("Game Boy".equals(platform)) {
+			cores.add("Gambatte");
+		} else if("Nintendo Entertainment System".equals(platform)){
+			cores.add("FCEUmm");
+			cores.add("Nestopia");
+			cores.add("QuickNES");
+		} else if("MAME".equals(platform)){
+			cores.add("MAME 2003 (0.78)");
+			cores.add("MAME 2010 (0.139)");
+		}
+		else
+			for (ModuleWrapper mw: getCoreList(ctx)) {
+				if (mw.getEmulatedSystemName().contains(platform)) {
+					cores.add(mw.getText());
+				}
+			}
+		return cores;
 	}
 }

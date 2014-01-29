@@ -23,12 +23,16 @@ import com.retroarch.browser.vektorgui.utils.ROMInfo;
 import com.retroarch.browser.vektorgui.utils.VektorGuiArcadeHits;
 import com.retroarch.browser.vektorgui.utils.VektorGuiBroadcastReceiver;
 import com.retroarch.browser.vektorgui.utils.VektorGuiDatabaseHelper;
+import com.retroarch.browser.vektorgui.utils.VektorGuiRomIdEngine;
 import com.retroarch.browser.vektorgui.utils.VektorGuiTheGamesDB;
 import com.retroarch.R;
-import com.retroarch.browser.vektorgui.ui.VektorGuiButton;
+import com.retroarch.browser.vektorgui.ui.VektorGuiLeftMenu;
 import com.retroarch.browser.vektorgui.ui.VektorGuiRomAdapter;
 import com.retroarch.browser.vektorgui.ui.VektorGuiRomItem;
-import com.retroarch.browser.vektorgui.ui.VektorGuiTextView;
+import com.retroarch.browser.vektorgui.ui.VektorGuiRomList;
+import com.retroarch.browser.vektorgui.ui.VektorPlatformNCorePicker;
+import com.retroarch.browser.vektorgui.ui.views.VektorGuiButton;
+import com.retroarch.browser.vektorgui.ui.views.VektorGuiTextView;
 import com.retroarch.browser.preferences.util.UserPreferences;
 import com.retroarch.browser.retroactivity.RetroActivityFuture;
 import com.retroarch.browser.retroactivity.RetroActivityPast;
@@ -58,50 +62,29 @@ import android.view.MenuInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnKeyListener;
+import android.view.Window;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
 
-public class VektorGuiActivity extends Activity implements OnItemClickListener,
-		OnClickListener, OnKeyListener {
+public class VektorGuiActivity extends Activity {
 	private static VektorGuiActivity theActivity;
-	private VektorGuiTextView gametitle;
 	private ImageView gamecover;
 	private VektorGuiTextView gamedesc;
-	private VektorGuiTextView gameyear;
-	private VektorGuiTextView numGames;
-	private VektorGuiButton playgame;
-	private VektorGuiRomAdapter romListAdapter;
 	private boolean creatingUI;
-	private ListView romList;
+	private VektorGuiRomList romList;
+	private VektorGuiLeftMenu leftMenu;
+	private VektorPlatformNCorePicker picker;
+	private VektorGuiRomIdEngine romEngine;
 	private List<String> supported_extensions;
 	private MediaPlayer mp;
 	private String platformPath;
 	private VektorGuiBroadcastReceiver receiver;
-	/**
-	 * Setting the ThreadPoolExecutor(s).
-	 */
-	private static final int CORE_POOL_SIZE = 5;
-	private static final int MAXIMUM_POOL_SIZE = 128;
-	private static final int NUMBER_OF_CORES = Runtime.getRuntime()
-			.availableProcessors();
-	private final BlockingQueue<Runnable> mDownloadWorkQueue = new LinkedBlockingQueue<Runnable>();
-	private final BlockingQueue<Runnable> mDecodeWorkQueue = new LinkedBlockingQueue<Runnable>();
-	private final ThreadPoolExecutor mDownloadThreadPool = new ThreadPoolExecutor(
-			CORE_POOL_SIZE, MAXIMUM_POOL_SIZE, KEEP_ALIVE_TIME,
-			KEEP_ALIVE_TIME_UNIT, mDownloadWorkQueue);
-	private final ThreadPoolExecutor mDecodeThreadPool = new ThreadPoolExecutor(
-			NUMBER_OF_CORES, NUMBER_OF_CORES, KEEP_ALIVE_TIME,
-			KEEP_ALIVE_TIME_UNIT, mDecodeWorkQueue);
-	private static final TimeUnit KEEP_ALIVE_TIME_UNIT;
-	private static final int KEEP_ALIVE_TIME = 10;
-	static {
-		KEEP_ALIVE_TIME_UNIT = TimeUnit.SECONDS;
-	}
 	/**
 	 * The list of rom elements
 	 */
@@ -113,35 +96,23 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 	private DownloadManager mManager;
 
 	private void defineUI() {
-		gametitle = (VektorGuiTextView) findViewById(R.id.vektor_gui_gametitle);
 		gamedesc = (VektorGuiTextView) findViewById(R.id.vektor_gui_gamedesc);
 		gamedesc.setMovementMethod(new ScrollingMovementMethod());
 		gamecover = (ImageView) findViewById(R.id.vektor_gui_gamecover);
-		gameyear = (VektorGuiTextView) findViewById(R.id.vektor_gui_gameyear);
-		playgame = (VektorGuiButton) findViewById(R.id.vektor_gui_playgame_btn);
-		numGames = (VektorGuiTextView) findViewById(R.id.vektor_gui_list_numgamesfound);
-		numGames.setVisibility(View.GONE);
-		ActionBar actionBar = getActionBar();
-		actionBar.setDisplayHomeAsUpEnabled(true);
-		this.getActionBar().setDisplayShowCustomEnabled(true);
-		this.getActionBar().setDisplayShowTitleEnabled(false);
-		LayoutInflater inflator = (LayoutInflater) this
-				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		View v = inflator.inflate(R.layout.vektor_gui_titlecustom, null);
-		((VektorGuiTextView) v.findViewById(R.id.vektor_gui_app_title))
-				.setText(this.getTitle());
-		this.getActionBar().setCustomView(v);
-		playgame.setOnClickListener(this);
+		picker = new VektorPlatformNCorePicker(this);
+		romList = new VektorGuiRomList(this);
+		leftMenu = new VektorGuiLeftMenu(this);
 	}
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		VektorGuiActivity.theActivity = this;
 		super.onCreate(savedInstanceState);
+		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
 				WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		mp = MediaPlayer.create(getApplicationContext(), R.raw.button11);
-		romListAdapter = new VektorGuiRomAdapter(roms, getApplicationContext());
+		romEngine = new VektorGuiRomIdEngine(this);
 		mManager = (DownloadManager) getSystemService(Activity.DOWNLOAD_SERVICE);
 		setContentView(R.layout.vektor_gui_layout);
 		defineUI();
@@ -151,8 +122,7 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 		String platform = prefs.getString("vektor_gui_last_platform", null);
 		if (null != core && null != name && null != platform) {
 			setModuleAndPlatform(core, name, platform, VektorGuiPlatformHelper
-					.findCore(VektorGuiPlatformHelper.getCoreList(this), name)
-					.getSupportedExtensions(), true);
+					.findCore(name, this).getSupportedExtensions(), true);
 		}
 		receiver = new VektorGuiBroadcastReceiver(mManager, this);
 		registerReceiver(receiver, new IntentFilter(
@@ -182,31 +152,11 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 		mp = MediaPlayer.create(getApplicationContext(), R.raw.button11);
 	}
 
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		super.onCreateOptionsMenu(menu);
-
-		{
-			VektorGuiActivity.theActivity = this;
-			MenuInflater inflater = new MenuInflater(this);
-			inflater.inflate(R.menu.vektor_gui_actionprovider_platform, menu);
-		}
-
-		return true;
-	}
-
 	public void setModuleAndPlatform(String core_path, String core_name,
 			String platform, List<String> supported_extensions, boolean init) {
 		if (!init)
 			return;
-		if (mDownloadWorkQueue.size() > 0) {
-			mDownloadWorkQueue.drainTo(new ArrayList<Runnable>());
-			mDownloadThreadPool.shutdownNow();
-		}
-		if (mDecodeWorkQueue.size() > 0) {
-			mDecodeWorkQueue.drainTo(new ArrayList<Runnable>());
-			mDecodeThreadPool.shutdownNow();
-		}
+		romEngine.clearQueues();
 		creatingUI = true;
 		if (null == core_path || null == core_name || null == platform)
 			return;
@@ -217,15 +167,6 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 		edit.putString("libretro_name", core_name);
 		edit.putString("vektor_gui_last_platform", platform);
 		edit.commit();
-		edit.commit();
-		VektorGuiTextView platform_name = (VektorGuiTextView) findViewById(R.id.vektor_gui_list_platformname_title);
-		VektorGuiTextView platform_core = (VektorGuiTextView) findViewById(R.id.vektor_gui_list_platformcore_title);
-		platform_name.setText(getResources().getString(
-				R.string.vektor_gui_platform_name)
-				+ " " + platform);
-		platform_core.setText(getResources().getString(
-				R.string.vektor_gui_platform_core)
-				+ " " + core_name);
 		this.supported_extensions = supported_extensions;
 		this.platformPath = consolePath(platform);
 		this.xmlId = getProperXML(platform);
@@ -262,8 +203,8 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 			protected void onPostExecute(Void result) {
 				// for (int i = 0; i < roms.size(); i++) {
 				if (roms.size() > 0)
-					updateUI(roms.get(romListAdapter.getSelectedItem()),
-							romListAdapter.getSelectedItem());
+					updateUI(roms.get(romList.getSelectedItem()),
+							romList.getSelectedItem());
 				// }
 			}
 		}.execute();
@@ -335,32 +276,20 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 			}
 		}
 		// Once it's done, we populate the list.
-		romList = (ListView) findViewById(R.id.vektor_gui_game_list);
-		romList.setSoundEffectsEnabled(false);
-		romList.setAdapter(romListAdapter);
-		romListAdapter.notifyDataSetChanged();
-		romList.setOnItemClickListener(this);
-		romList.setOnKeyListener(this);
+		romList.populate();
 		if (roms.size() > 0) {
 			romList.setSelection(0);
-			// Log.d("VektorGuiActivity::initRoms()","Setting cursor at first element of list.");
-			updateUI(romListAdapter.getItem(0), 0);
+			updateUI(romList.getItem(0), 0);
+			File resStor = new File(romFolder,"Resources");
+			File coverStor = new File(resStor,VektorGuiPlatformHelper.cleanName(romList.getItem(0).getROMPath().getName())+"-CV.jpg");
+			if(coverStor.exists())
 			addDecodingJob(
-					Uri.fromFile(romListAdapter.getItem(0).getROMPath()),
-					romListAdapter.getItem(0));
-			romListAdapter.selectRow(0);
-			numGames.setText(getResources().getString(
-					R.string.vektor_gui_list_gamesfound).replace("[%d]",
-					Integer.toString(roms.size())));
-			numGames.setVisibility(View.VISIBLE);
+					Uri.fromFile(romList.getItem(0).getROMPath()),
+					romList.getItem(0));
+			romList.selectRow(0);
 		} else {
-			gameyear.setText("19XX");
-			gametitle.setText("Game Title");
 			gamedesc.setText(getResources().getString(
 					R.string.vektor_gui_game_no_description));
-			numGames.setText(getResources().getString(
-					R.string.vektor_gui_list_gamesfound).replace("[%d]",
-					Integer.toString(0)));
 			gamecover.setImageDrawable(getResources().getDrawable(
 					R.drawable.vektor_nocover));
 		}
@@ -577,56 +506,13 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 					VektorGuiPlatformHelper.cleanName(item.getROMPath()
 							.getName()) + "-CV.jpg");
 			if (!coverStor.exists()) {
-				mDownloadThreadPool.execute(new VektorGuiROMTask(this, resStor,
-						item, mManager));
+				romEngine.identifyRom(resStor,item,mManager);
 			}
 		}
 	}
 
 	public void addDecodingJob(final Uri fileUri, final VektorGuiRomItem item) {
-		mDecodeThreadPool.execute(new Runnable() {
-
-			@Override
-			public void run() {
-				// Log.i("addDecodingJob()", new
-				// File(fileUri.getPath()).getName());
-				android.os.Process
-						.setThreadPriority(android.os.Process.THREAD_PRIORITY_DISPLAY);
-				BitmapFactory.Options opts = new BitmapFactory.Options();
-				opts.inJustDecodeBounds = true;
-				BitmapFactory.decodeFile(fileUri.getPath(), opts);
-				int w = opts.outWidth;
-				int h = opts.outHeight;
-				opts.inSampleSize = Math.max(w, h) / 168;
-				opts.inJustDecodeBounds = false;
-				final BitmapDrawable bd = new BitmapDrawable(getResources(),
-						BitmapFactory.decodeFile(fileUri.getPath(), opts));
-				item.setGameCover(bd);
-				// updateGameCover(item.getGameName());
-				Log.i("addDecodingJob()",
-						(romListAdapter.getSelectedItem() > -1 ? ""
-								+ romListAdapter.getSelectedItem()
-								+ " "
-								+ romListAdapter.getItem(
-										romListAdapter.getSelectedItem())
-										.getGameName() : "-1"));
-				if (romListAdapter.getSelectedItem() > -1
-						&& romListAdapter
-								.getItem(romListAdapter.getSelectedItem())
-								.getGameName()
-								.equalsIgnoreCase(item.getGameName())) {
-					runOnUiThread(new Runnable() {
-
-						@Override
-						public void run() {
-							// TODO Auto-generated method stub
-							gamecover.setImageDrawable(bd);
-						}
-
-					});
-				}
-			}
-		});
+		romEngine.addDecodingJob(fileUri, item);
 	}
 
 	public void updateGameCover(final String gameName) {
@@ -647,13 +533,12 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 					public void run() {
 						android.os.Process
 								.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
-						if (null != romListAdapter
-								&& romListAdapter.getSelectedItem() > -1) {
-							VektorGuiRomItem item = romListAdapter
-									.getItem(romListAdapter.getSelectedItem());
+						if (null != romList && romList.getSelectedItem() > -1) {
+							VektorGuiRomItem item = romList.getItem(romList
+									.getSelectedItem());
 							if (gameName.equals(item.getGameName())) {
 								creatingUI = true;
-								updateUI(item, romListAdapter.getSelectedItem());
+								updateUI(item, romList.getSelectedItem());
 								creatingUI = false;
 							}
 						}
@@ -668,78 +553,7 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 
 	}
 
-	private class VektorGuiROMTask implements Runnable {
-		private File resStor;
-		private VektorGuiActivity activity;
-		private DownloadManager mManager;
-		private VektorGuiRomItem item;
-
-		public VektorGuiROMTask(VektorGuiActivity activity, File resStor,
-				VektorGuiRomItem item, DownloadManager mManager) {
-			this.resStor = resStor;
-			this.activity = activity;
-			this.mManager = mManager;
-			this.item = item;
-		}
-
-		@SuppressWarnings("rawtypes")
-		public void run() {
-			try {
-				Thread.sleep(0);
-				android.os.Process
-						.setThreadPriority(android.os.Process.THREAD_PRIORITY_DEFAULT);
-				Log.i("ROMTask", "Game: " + item.getGameName());
-				if (!platformPath.equalsIgnoreCase("MAME")) {
-					VektorGuiTheGamesDB tgdb = new VektorGuiTheGamesDB(resStor,
-							activity, platformPath, item, mManager);
-					tgdb.DownloadFromUrl();
-				} else if ("MAME".equalsIgnoreCase(platformPath)) {
-					VektorGuiArcadeHits vgah = new VektorGuiArcadeHits(resStor,
-							activity, platformPath, item, mManager);
-					vgah.DownloadFromUrl();
-				}
-			} catch (InterruptedException ie) {
-				return;
-			}
-			return;
-		}
-
-	}
-
-	@Override
-	public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
-		VektorGuiRomItem item = romListAdapter.getItem(arg2);
-		updateUI(item, arg2);
-		File resStor = new File(romFolder, "Resources");
-		File coverStor = new File(resStor,
-				VektorGuiPlatformHelper.cleanName(item.getROMPath().getName())
-						+ "-CV.jpg");
-		Log.i("onItemClick",
-				coverStor.exists() + " " + (null == item.getGameCover()));
-		if (coverStor.exists() && item.getGameCover() == null)
-			addDecodingJob(Uri.fromFile(coverStor), item);
-	}
-
-	private void updateUI(VektorGuiRomItem item, int position) {
-		gametitle.setText(item.getGameName());
-		gamedesc.setText(item.getGameDescription());
-		gameyear.setText(item.getGameYear());
-		if (null != item.getGameCover())
-			gamecover.setImageDrawable(item.getGameCover());
-		else
-			gamecover.setImageDrawable(getResources().getDrawable(
-					R.drawable.vektor_nocover));
-		if (position != romListAdapter.getSelectedItem() && !creatingUI) {
-			mp.start();
-		}
-		romListAdapter.selectRow(position);
-		romList.setSelection(position);
-		if (null != romList.getSelectedView())
-			romList.getSelectedView().requestFocus();
-		romListAdapter.notifyDataSetChanged();
-	}
-
-	private void romExecute(String absolutePath) {
+	public void romExecute(String absolutePath) {
 		final SharedPreferences prefs = PreferenceManager
 				.getDefaultSharedPreferences(getApplicationContext());
 		final String libretro_path = prefs.getString("libretro_path", "");
@@ -769,94 +583,53 @@ public class VektorGuiActivity extends Activity implements OnItemClickListener,
 	}
 
 	@Override
-	public void onClick(View v) {
-
-		if (v.getId() == R.id.vektor_gui_playgame_btn && null != romListAdapter) {
-			if (romListAdapter.getCount() > 0) {
-
-				romExecute(romListAdapter.getItem(
-						romListAdapter.getSelectedItem()).getRomPath());
-			}
-		}
-	}
-
-	@Override
-	public boolean onKey(View v, int keyCode, KeyEvent event) {
-		if (event.getAction() == KeyEvent.ACTION_DOWN && null != romList
-				&& null != romList.getSelectedView()
-				&& romListAdapter.getCount() > 1) {
-			int position = romListAdapter.getSelectedItem();
-			switch (keyCode) {
-			case KeyEvent.KEYCODE_DPAD_DOWN:
-				if (position < romListAdapter.getCount() - 1) {
-					updateUI(romListAdapter.getItem(position + 1), position + 1);
-					romList.setSelection(position + 1);
-					File resStor = new File(romFolder, "Resources");
-					File coverStor = new File(resStor,
-							VektorGuiPlatformHelper.cleanName(romListAdapter
-									.getItem(position + 1).getROMPath()
-									.getName())
-									+ "-CV.jpg");
-					if (coverStor.exists()) {
-						addDecodingJob(Uri.fromFile(coverStor),
-								romListAdapter.getItem(position + 1));
-					}
-				}
-				break;
-			case KeyEvent.KEYCODE_DPAD_UP:
-				if (position > 0) {
-					updateUI(romListAdapter.getItem(position - 1), position - 1);
-					romList.setSelection(position - 1);
-					File resStor = new File(romFolder, "Resources");
-					File coverStor = new File(resStor,
-							VektorGuiPlatformHelper.cleanName(romListAdapter
-									.getItem(position - 1).getROMPath()
-									.getName())
-									+ "-CV.jpg");
-					if (coverStor.exists()) {
-						addDecodingJob(Uri.fromFile(coverStor),
-								romListAdapter.getItem(position - 1));
-					}
-				}
-				break;
-			case KeyEvent.KEYCODE_ENTER:
-			case KeyEvent.KEYCODE_BUTTON_START:
-				if (romListAdapter.getSelectedItem() > -1)
-					this.romExecute(romListAdapter.getItem(
-							romListAdapter.getSelectedItem()).getRomPath());
-				break;
-			}
-		}
-		return false;
-	}
-
-	@Override
 	public boolean onKeyUp(int keyCode, KeyEvent event) {
 		return super.onKeyUp(keyCode, event);
-		/*
-		 * if (keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode ==
-		 * KeyEvent.KEYCODE_VOLUME_DOWN || keyCode ==
-		 * KeyEvent.KEYCODE_VOLUME_MUTE) return false; if (null !=
-		 * romList.getSelectedView()) romList.getSelectedView().requestFocus();
-		 * return true;
-		 */
 	}
 
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		return super.onKeyDown(keyCode, event);
-		/*
-		 * Log.i("KeyDown", "KC=" + KeyEvent.keyCodeToString(keyCode)); if
-		 * (keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode ==
-		 * KeyEvent.KEYCODE_VOLUME_DOWN || keyCode ==
-		 * KeyEvent.KEYCODE_VOLUME_MUTE) return false; if (null !=
-		 * romList.getSelectedView()) romList.getSelectedView().requestFocus();
-		 * return true;
-		 */
+	}
 
+	public void updateUI(VektorGuiRomItem item, int position) {
+		gamedesc.setText(item.getGameDescription());
+		if (null != item.getGameCover())
+			gamecover.setImageDrawable(item.getGameCover());
+		else
+			gamecover.setImageDrawable(getResources().getDrawable(
+					R.drawable.vektor_nocover));
+		if (position != romList.getSelectedItem() && !creatingUI) {
+			mp.start();
+		}
+		romList.selectRow(position);
+		romList.setSelection(position);
+		if (null != romList.getSelectedView())
+			romList.getSelectedView().requestFocus();
+		romList.notifyDataSetChanged();
 	}
 
 	public void addGameToReceiver(long dlId, VektorGuiRomItem item) {
 		receiver.addGameId(dlId, item);
+	}
+
+	public List<VektorGuiRomItem> getRoms() {
+		return roms;
+	}
+
+	public File getRomFolder() {
+		return romFolder;
+	}
+
+	public String getPlatformPath() {
+		return platformPath;
+	}
+
+	public VektorGuiRomList getRomList() {
+		return romList;
+	}
+
+	public ImageView getGameCover() {
+		return gamecover;
 	}
 }
