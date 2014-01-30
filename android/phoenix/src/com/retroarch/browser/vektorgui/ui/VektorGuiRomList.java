@@ -16,10 +16,11 @@ import android.view.View;
 import android.view.View.OnKeyListener;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ImageView;
 import android.widget.ListView;
 
-public class VektorGuiRomList implements OnItemClickListener, OnKeyListener {
+public class VektorGuiRomList implements OnItemClickListener, OnItemSelectedListener {
 	private ListView romList;
 	private VektorGuiRomAdapter romListAdapter;
 	private VektorGuiActivity rootActivity;
@@ -31,7 +32,8 @@ public class VektorGuiRomList implements OnItemClickListener, OnKeyListener {
 	}
 	
 	public int getSelectedItem(){
-		return romListAdapter.getSelectedItem();
+		return 0;
+		//return romListAdapter.getSelectedItem();
 	}
 
 	public void populate() {
@@ -39,7 +41,8 @@ public class VektorGuiRomList implements OnItemClickListener, OnKeyListener {
 		romList.setAdapter(romListAdapter);
 		romListAdapter.notifyDataSetChanged();
 		romList.setOnItemClickListener(this);
-		romList.setOnKeyListener(this);
+		romList.setOnItemSelectedListener(this);
+		//romList.setOnKeyListener(this);
 	}
 	@Override
 	public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
@@ -55,7 +58,7 @@ public class VektorGuiRomList implements OnItemClickListener, OnKeyListener {
 			rootActivity.addDecodingJob(Uri.fromFile(coverStor), item);
 	}
 
-	
+	/*
 	@Override
 	public boolean onKey(View v, int keyCode, KeyEvent event) {
 		if (event.getAction() == KeyEvent.ACTION_DOWN && null != romList
@@ -105,13 +108,12 @@ public class VektorGuiRomList implements OnItemClickListener, OnKeyListener {
 		}
 		return false;
 	}
-
+*/
 	public VektorGuiRomItem getItem(int selectedItem) {
 		return romListAdapter.getItem(selectedItem);
 	}
 
 	public void selectRow(int position) {
-		romListAdapter.selectRow(position);
 	}
 
 	public void setSelection(int position) {
@@ -124,6 +126,17 @@ public class VektorGuiRomList implements OnItemClickListener, OnKeyListener {
 
 	public void notifyDataSetChanged() {
 		romListAdapter.notifyDataSetChanged();
+	}
+
+	@Override
+	public void onItemSelected(AdapterView<?> arg0, View arg1, int arg2,
+			long arg3) {
+		rootActivity.updateUI(romListAdapter.getItem(arg2), arg2);
+	}
+
+	@Override
+	public void onNothingSelected(AdapterView<?> arg0) {
+		
 	}
 	
 	

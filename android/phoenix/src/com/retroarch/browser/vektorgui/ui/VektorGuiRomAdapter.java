@@ -72,6 +72,7 @@ public class VektorGuiRomAdapter extends BaseAdapter implements OnClickListener 
 				.findViewById(R.id.vektor_gui_list_playbtn);
 		RelativeLayout gameBg = (RelativeLayout) v
 				.findViewById(R.id.vektor_gui_list_bg);
+		/*
 		if (position == selectedItem) {
 			gameTitle.setTextColor(Color.WHITE);
 			gameTitle.setSelected(true);
@@ -83,7 +84,7 @@ public class VektorGuiRomAdapter extends BaseAdapter implements OnClickListener 
 			gameTitle.setSelected(false);
 			gameBg.setBackgroundColor(Color.TRANSPARENT);
 			playGame.setVisibility(View.GONE);
-		}
+		}*/
 		gameTitle.setText(entry.getGameName()
 				+ (null == entry.getGameYear() ? "" : " - (" + entry.getGameYear()
 						+ ")"));
@@ -94,7 +95,7 @@ public class VektorGuiRomAdapter extends BaseAdapter implements OnClickListener 
 	public void notifyDataSetChanged() {
 		super.notifyDataSetChanged();
 	}
-
+/*
 	public void selectRow(int position) {
 		selectedItem = position;
 		notifyDataSetChanged();
@@ -103,11 +104,11 @@ public class VektorGuiRomAdapter extends BaseAdapter implements OnClickListener 
 	public int getSelectedItem() {
 		return selectedItem;
 	}
-
+*/
 	@Override
 	public void onClick(View v) {
 		if (v.getId() == R.id.vektor_gui_list_playbtn) {
-			rootActivity.romExecute(getItem(getSelectedItem()).getRomPath());
+			//rootActivity.romExecute(getItem(getSelectedItem()).getRomPath());
 		}
 	}
 }

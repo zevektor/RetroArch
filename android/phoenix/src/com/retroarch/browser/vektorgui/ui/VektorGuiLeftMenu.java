@@ -22,8 +22,7 @@ public class VektorGuiLeftMenu implements OnClickListener {
 	@Override
 	public void onClick(View v) {
 		if(v.getId()==R.id.vektor_gui_goto_home){
-			Intent i = new Intent(rootActivity,MainMenuActivity.class);
-			rootActivity.startActivity(i);
+			rootActivity.onBackPressed();
 		}
 	}
 }

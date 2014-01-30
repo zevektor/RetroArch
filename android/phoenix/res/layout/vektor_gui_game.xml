@@ -3,6 +3,7 @@
     android:id="@+id/vektor_gui_list_bg"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:background="@color/transparent" 
     android:orientation="horizontal" >
 
     <com.retroarch.browser.vektorgui.ui.views.VektorGuiTextView
@@ -14,6 +15,7 @@
         android:layout_toLeftOf="@+id/vektor_gui_list_playbtn"
         android:ellipsize="marquee"
         android:freezesText="true"
+        android:background="@color/transparent" 
         android:marqueeRepeatLimit="marquee_forever"
         android:paddingBottom="15dp"
         android:paddingTop="15dp"
@@ -21,7 +23,7 @@
         android:scrollHorizontally="true"
         android:singleLine="true"
         android:text="Game Name"
-        android:textColor="@color/android:white"
+        android:textColor="@color/vektor_gui_list_textcolor"
         android:textSize="14sp" />
 
     <ImageButton
@@ -31,7 +33,7 @@
         android:layout_alignParentRight="true"
         android:layout_centerVertical="true"
         android:src="@android:drawable/ic_media_play"
-        android:background="#00000000" 
+        android:background="@color/transparent" 
         android:visibility="gone"/>
 
 </RelativeLayout>

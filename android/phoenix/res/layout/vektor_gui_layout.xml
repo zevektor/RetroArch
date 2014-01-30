@@ -11,7 +11,7 @@
         android:id="@+id/vektor_gui_top_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#222222" >
+        android:background="@color/darkestgray" >
 
         <ImageButton
             android:id="@+id/vektor_gui_goto_home"
@@ -59,7 +59,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight=".3"
-            android:background="#333333"
+            android:background="@color/darkgray"
             android:orientation="vertical" >
 
             <!--
@@ -136,6 +136,7 @@
                 android:paddingLeft="5dp"
                 android:paddingRight="5dp"
                 android:scrollbars="none"
+                android:background="@drawable/vektor_gui_imagebutton_selector"
                 android:text="@string/vektor_gui_game_no_description"
                 android:textColor="#FFFFFF"
                 android:textSize="12sp" />
@@ -146,7 +147,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight=".7"
-            android:background="#F3F3F3"
+            android:background="@color/whitef3"
             android:orientation="vertical" >
 
             <!--
