@@ -33,7 +33,7 @@
         android:layout_alignParentRight="true"
         android:layout_centerVertical="true"
         android:src="@android:drawable/ic_media_play"
-        android:background="@color/transparent" 
+        android:background="@drawable/vektor_gui_imagebutton_selector" 
         android:visibility="gone"/>
 
 </RelativeLayout>

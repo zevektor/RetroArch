@@ -43,7 +43,7 @@ public class VektorGuiArcadeHits {
 	}
 	private void getCoverLink() {
 		try {
-			Document doc = Jsoup.connect("http://arcadehits.net/index.php?p=roms&jeu="+item.getGameName()).timeout(0).get();
+			Document doc = Jsoup.connect("http://arcadehits.net/index.php?p=roms&jeu="+item.getGameName()).timeout(15000).get();
 			Elements els = doc.getElementsByTag("h4");
 			String gameName = els.get(0).text();
 			if("Derniers jeux commentés".equalsIgnoreCase(gameName)) return;

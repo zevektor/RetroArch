@@ -278,7 +278,7 @@ public class VektorGuiActivity extends Activity {
 		// Once it's done, we populate the list.
 		romList.populate();
 		if (roms.size() > 0) {
-			romList.setSelection(0);
+			//romList.setSelection(0);
 			updateUI(romList.getItem(0), 0);
 			File resStor = new File(romFolder,"Resources");
 			File coverStor = new File(resStor,VektorGuiPlatformHelper.cleanName(romList.getItem(0).getROMPath().getName())+"-CV.jpg");
@@ -603,7 +603,7 @@ public class VektorGuiActivity extends Activity {
 			mp.start();
 		}
 		romList.selectRow(position);
-		romList.setSelection(position);
+		//romList.setSelection(position);
 		if (null != romList.getSelectedView())
 			romList.getSelectedView().requestFocus();
 		romList.notifyDataSetChanged();

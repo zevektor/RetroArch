@@ -187,6 +187,7 @@
                 android:layout_alignParentTop="true"
                 android:divider="@null"
                 android:dividerHeight="0dp"
+                android:scrollbars="none"
                 android:listSelector="@drawable/vektor_gui_listitem_selector" >
             </ListView>
         </RelativeLayout>
