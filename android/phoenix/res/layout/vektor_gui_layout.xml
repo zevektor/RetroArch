@@ -20,8 +20,8 @@
             android:layout_alignParentLeft="true"
             android:layout_centerVertical="true"
             android:layout_marginLeft="5dp"
-            android:scaleType="fitXY"
             android:background="@drawable/vektor_gui_imagebutton_selector"
+            android:scaleType="fitXY"
             android:src="@drawable/goto_home" />
 
         <ImageView
@@ -90,9 +90,10 @@
                 android:id="@+id/vektor_gui_gamecover"
                 android:layout_width="128dp"
                 android:layout_height="wrap_content"
-                android:layout_alignParentTop="true"
                 android:layout_centerHorizontal="true"
                 android:layout_marginTop="15dp"
+                android:adjustViewBounds="true"
+                android:scaleType="fitCenter"
                 android:src="@drawable/vektor_nocover" />
 
             <!--
@@ -131,12 +132,12 @@
                 android:layout_centerHorizontal="true"
                 android:layout_marginBottom="5dp"
                 android:layout_marginTop="15dp"
+                android:background="@drawable/vektor_gui_imagebutton_selector"
                 android:focusable="false"
                 android:focusableInTouchMode="true"
                 android:paddingLeft="5dp"
                 android:paddingRight="5dp"
                 android:scrollbars="none"
-                android:background="@drawable/vektor_gui_imagebutton_selector"
                 android:text="@string/vektor_gui_game_no_description"
                 android:textColor="#FFFFFF"
                 android:textSize="12sp" />
@@ -187,8 +188,8 @@
                 android:layout_alignParentTop="true"
                 android:divider="@null"
                 android:dividerHeight="0dp"
-                android:scrollbars="none"
-                android:listSelector="@drawable/vektor_gui_listitem_selector" >
+                android:listSelector="@drawable/vektor_gui_listitem_selector"
+                android:scrollbars="none" >
             </ListView>
         </RelativeLayout>
     </LinearLayout>

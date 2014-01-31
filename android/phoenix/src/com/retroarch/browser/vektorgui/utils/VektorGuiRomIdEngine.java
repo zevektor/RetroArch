@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -12,6 +13,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.retroarch.browser.vektorgui.VektorGuiActivity;
 import com.retroarch.browser.vektorgui.ui.VektorGuiRomItem;
@@ -39,8 +41,22 @@ public class VektorGuiRomIdEngine {
 		KEEP_ALIVE_TIME_UNIT = TimeUnit.SECONDS;
 	}
 
-	public VektorGuiRomIdEngine(VektorGuiActivity rootActivity) {
+	public VektorGuiRomIdEngine(final VektorGuiActivity rootActivity) {
 		this.rootActivity = rootActivity;
+		mDownloadThreadPool
+				.setRejectedExecutionHandler(new RejectedExecutionHandler() {
+					@Override
+					public void rejectedExecution(Runnable r,
+							ThreadPoolExecutor executor) {
+					}
+				});
+		mDecodeThreadPool
+				.setRejectedExecutionHandler(new RejectedExecutionHandler() {
+					@Override
+					public void rejectedExecution(Runnable r,
+							ThreadPoolExecutor executor) {
+					}
+				});
 	}
 
 	public void clearQueues() {
