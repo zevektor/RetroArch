@@ -27,7 +27,7 @@ public class VektorGuiPlatformHelper {
 	}
 
 	public static Drawable getIcon(Context ctx, String name) {
-		if ("Nintendo Entertainment System".equals(name))
+		/*if ("Nintendo Entertainment System".equals(name))
 			return ctx.getResources().getDrawable(R.drawable.platform_nes);
 		else if ("Super Nintendo Entertainment System".equals(name))
 			return ctx.getResources().getDrawable(R.drawable.platform_snes);
@@ -53,7 +53,7 @@ public class VektorGuiPlatformHelper {
 			return ctx.getResources().getDrawable(R.drawable.platform_nds);
 		else if ("MAME".equals(name))
 			return ctx.getResources().getDrawable(R.drawable.platform_mame);
-		else
+		else*/
 			return null;
 	}
 
