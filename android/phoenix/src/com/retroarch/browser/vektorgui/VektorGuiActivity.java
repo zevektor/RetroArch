@@ -114,7 +114,7 @@ public class VektorGuiActivity extends Activity {
 		mp = MediaPlayer.create(getApplicationContext(), R.raw.button11);
 		romEngine = new VektorGuiRomIdEngine(this);
 		mManager = (DownloadManager) getSystemService(Activity.DOWNLOAD_SERVICE);
-		setContentView(R.layout.vektor_gui_layout);
+		setContentView(R.layout.vektor_gui_layout);setContentView(R.layout.vektor_gui_layout);
 		defineUI();
 		SharedPreferences prefs = UserPreferences.getPreferences(this);
 		String core = prefs.getString("libretro_path", null);
